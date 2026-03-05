@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Sun, Droplet, Home, Calendar, ArrowLeft, Plus, Check } from 'lucide-react';
 import type { UserProfile, Plant } from '../../App';
+import { getRecommendations } from '../../service/recommendations';
+import type { Preferences, PlantItem } from '../../service/recommendations';
 
 interface RecommendedPlant {
   name: string;
@@ -27,101 +29,73 @@ export function PlantRecommendationsPage({ user, plants, onAddPlant, onBack }: P
   const [selectedPlant, setSelectedPlant] = useState<RecommendedPlant | null>(null);
   const [addedPlants, setAddedPlants] = useState<Set<string>>(new Set());
 
-  // Recommendations based on user profile
-  const allRecommendations: RecommendedPlant[] = [
-    {
-      name: 'Cherry Tomatoes',
-      species: 'Solanum lycopersicum',
-      image: 'https://images.unsplash.com/photo-1748432171507-c1d62fe2e859?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0b21hdG8lMjBwbGFudCUyMGdyb3dpbmd8ZW58MXx8fHwxNzY4MzYxMDE3fDA&ixlib=rb-4.1.0&q=80&w=1080',
-      difficulty: 'easy',
-      sunlight: 'high',
-      waterFrequency: 2,
-      spaceNeeded: 'medium',
-      daysToHarvest: 60,
-      benefits: ['Great for beginners', 'High yield', 'Can save seeds'],
-      tips: 'Save seeds from store-bought tomatoes! Dry them on paper towels for a week before planting.',
-      seedSource: 'Store-bought tomatoes'
-    },
-    {
-      name: 'Basil',
-      species: 'Ocimum basilicum',
-      image: 'https://images.unsplash.com/photo-1618343619081-e65a0559a91d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZXJicyUyMHdpbmRvd3NpbGx8ZW58MXx8fHwxNzY4NDIyMzQxfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      difficulty: 'easy',
-      sunlight: 'medium',
-      waterFrequency: 1,
-      spaceNeeded: 'small',
-      daysToHarvest: 30,
-      benefits: ['Fast growing', 'Perfect for windowsills', 'Culinary herb'],
-      tips: 'Pinch off flowers to encourage leaf growth. Harvest regularly for bushier plants.',
-      seedSource: 'Nursery or grocery store'
-    },
-    {
-      name: 'Green Onions',
-      species: 'Allium fistulosum',
-      image: 'https://images.unsplash.com/photo-1652366358812-6fde6d1f1caf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRvb3IlMjBwbGFudHMlMjBhcGFydG1lbnR8ZW58MXx8fHwxNzY4NDIyMzQwfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      difficulty: 'easy',
-      sunlight: 'low',
-      waterFrequency: 2,
-      spaceNeeded: 'small',
-      daysToHarvest: 21,
-      benefits: ['Regrows from scraps', 'Low maintenance', 'Works in low light'],
-      tips: 'Save the white root ends from store-bought green onions and place in water. They\'ll regrow!',
-      seedSource: 'Kitchen scraps'
-    },
-    {
-      name: 'Bell Peppers',
-      species: 'Capsicum annuum',
-      image: 'https://images.unsplash.com/photo-1632819773825-2b801de6c2d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYWxjb255JTIwZ2FyZGVuJTIwdXJiYW58ZW58MXx8fHwxNzY4NDIyMzQyfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      difficulty: 'medium',
-      sunlight: 'high',
-      waterFrequency: 2,
-      spaceNeeded: 'medium',
-      daysToHarvest: 75,
-      benefits: ['Colorful produce', 'Can save seeds', 'Nutritious'],
-      tips: 'Extract seeds from store-bought peppers. Let them dry completely before planting.',
-      seedSource: 'Store-bought peppers'
-    },
-    {
-      name: 'Lettuce',
-      species: 'Lactuca sativa',
-      image: 'https://images.unsplash.com/photo-1627730327661-9b5efb7d47b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwbGFudCUyMGNhcmUlMjB3YXRlcmluZ3xlbnwxfHx8fDE3Njg0MjIzNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-      difficulty: 'easy',
-      sunlight: 'low',
-      waterFrequency: 1,
-      spaceNeeded: 'small',
-      daysToHarvest: 30,
-      benefits: ['Quick harvest', 'Shade tolerant', 'Multiple harvests'],
-      tips: 'Lettuce regrows from the stump! Keep the base in water and it will sprout new leaves.',
-      seedSource: 'Kitchen scraps or seeds'
-    },
-    {
-      name: 'Mint',
-      species: 'Mentha',
-      image: 'https://images.unsplash.com/photo-1618343619081-e65a0559a91d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZXJicyUyMHdpbmRvd3NpbGx8ZW58MXx8fHwxNzY4NDIyMzQxfDA&ixlib=rb-4.1.0&q=80&w=1080',
-      difficulty: 'easy',
-      sunlight: 'medium',
-      waterFrequency: 2,
-      spaceNeeded: 'small',
-      daysToHarvest: 21,
-      benefits: ['Very hardy', 'Aromatic', 'Multiple uses'],
-      tips: 'Mint grows easily from cuttings. Place stems in water until roots form, then plant.',
-      seedSource: 'Grocery store cuttings'
-    }
-  ];
+  const [recommendations, setRecommendations] = useState<RecommendedPlant[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Filter based on user's space and sunlight
-  const recommendations = allRecommendations.filter(plant => {
-    if (user.sunlightHours === 'low' && plant.sunlight === 'high') return false;
-    if (user.spaceSize === 'small' && plant.spaceNeeded === 'large') return false;
-    return true;
-  }).sort((a, b) => {
-    // Prioritize easy plants for beginners
-    if (user.experience === 'beginner') {
-      if (a.difficulty === 'easy' && b.difficulty !== 'easy') return -1;
-      if (a.difficulty !== 'easy' && b.difficulty === 'easy') return 1;
+  const prefs = useMemo(() => {
+
+  const sunlightMap: Record<string, "low" | "medium" | "bright"> = {
+    low: "low",
+    medium: "medium",
+    high: "bright",   // UI uses "high", database uses "bright"
+  };
+
+  return {
+    sunlight: sunlightMap[user.sunlightHours] ?? "medium",
+    capacity: user.spaceSize ?? "medium",
+
+    // if user doesn't have these yet we default them
+    outdoorAccess: (user as any).outdoorAccess ?? "none",
+
+    goals: (user as any).goals ?? []
+  };
+
+}, [user]);
+
+
+useEffect(() => {
+  let cancelled = false;
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const results = await getRecommendations(prefs);
+
+      const mapped: RecommendedPlant[] = results.map((p: PlantItem) => ({
+        name: p.name,
+        species: p.species ?? "Unknown Species",
+        image:
+          p.imageUrl ??
+          "https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
+        difficulty: (p.difficulty as any) ?? "easy",
+        sunlight: p.sun === "bright" ? "high" : (p.sun as any), // convert back for UI
+        waterFrequency: p.waterFrequencyDays ?? 7,
+        spaceNeeded: p.size,
+        daysToHarvest: 30, // optional, add to Firestore later
+        benefits: p.goals ?? [],
+        tips: "Follow standard care instructions.",
+        seedSource: "Seeds or nursery",
+      }));
+
+      if (!cancelled) setRecommendations(mapped);
+    } catch (e: any) {
+      if (!cancelled) setError(e?.message ?? "Failed to load recommendations");
+    } finally {
+      if (!cancelled) setLoading(false);
     }
-    return 0;
-  });
+  }
+
+  load();
+  return () => {
+    cancelled = true;
+  };
+}, [prefs]);
+
+  // Recommendations based on user profile
+ 
 
   const handleAddPlant = (recommended: RecommendedPlant) => {
     const newPlant: Omit<Plant, 'id'> = {
@@ -302,6 +276,15 @@ export function PlantRecommendationsPage({ user, plants, onAddPlant, onBack }: P
 
       {/* Recommendations List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      
+      {loading && (
+  <div className="text-center py-8 text-gray-500">Loading recommendations...</div>
+)}
+
+{error && (
+  <div className="text-center py-8 text-red-600">{error}</div>
+)}
+      
         {recommendations.map((plant) => {
           const isAdded = addedPlants.has(plant.name);
           

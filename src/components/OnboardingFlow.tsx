@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { ChevronRight, Home, Sun, Target, Sprout } from 'lucide-react';
+import { ChevronRight, Home, Sun, Target, Sprout, ArrowLeft } from 'lucide-react';
 import type { UserProfile } from '../App';
 
 interface OnboardingFlowProps {
   onComplete: (profile: Partial<UserProfile>) => void;
+  onExit: () => void;
 }
 
-export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+export function OnboardingFlow({ onComplete, onExit }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<Partial<UserProfile>>({
     spaceType: 'apartment',
@@ -250,6 +251,16 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     }
   };
 
+  
+ const handleBack = () => {
+  if (step === 0) {
+    onExit();           // go back to login page
+    return;
+  }
+  setStep((s) => Math.max(0, s - 1));
+};
+
+
   return (
     <div className="h-screen bg-gradient-to-b from-green-50 to-emerald-50 flex flex-col">
       {/* Content */}
@@ -278,17 +289,31 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
       {/* Footer */}
       <div className="bg-white border-t border-gray-100">
-        <div className="max-w-md mx-auto px-4 py-3">
-          <button
-            onClick={handleNext}
-            disabled={step === 3 && (!profile.goals || profile.goals.length === 0)}
-            className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            <span>{isLastStep ? 'Get Started' : 'Continue'}</span>
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+  <div className="max-w-md mx-auto px-4 py-3 flex gap-3">
+    
+    {/* Back */}
+    <button
+      type="button"
+      onClick={handleBack}
+      disabled={false}
+      className="w-14 py-3 rounded-xl border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+      aria-label="Back"
+    >
+      <ArrowLeft className="w-5 h-5" />
+    </button>
+
+    {/* Continue / Get Started */}
+    <button
+      onClick={handleNext}
+      disabled={step === 3 && (!profile.goals || profile.goals.length === 0)}
+      className="flex-1 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+    >
+      <span>{isLastStep ? 'Get Started' : 'Continue'}</span>
+      <ChevronRight className="w-5 h-5" />
+    </button>
+
+  </div>
+</div>
     </div>
   );
 }

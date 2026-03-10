@@ -17,7 +17,7 @@ app.post("/api/analyze-plant", async (req, res) => {
       return res.status(400).json({ error: "Missing imageBase64" });
     }
 
-    const resp = await fetch("https://api.plant.id/v2/identify", {
+    const resp = await fetch("https://api.plant.id/v2/health_assessment", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -25,6 +25,15 @@ app.post("/api/analyze-plant", async (req, res) => {
       },
       body: JSON.stringify({
         images: [imageBase64],
+        modifiers: ["crops_fast", "similar_images"],
+        disease_details: [
+          "cause",
+          "common_names",
+          "classification",
+          "description",
+          "treatment",
+          "url",
+        ],
       }),
     });
 
@@ -43,4 +52,8 @@ app.post("/api/analyze-plant", async (req, res) => {
   }
 });
 
-app.listen(5000, () => console.log("Backend running: http://localhost:5000"));
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Backend running on port ${PORT}`);
+});

@@ -4,8 +4,8 @@ import type { Plant } from '../App';
 import type { PlantRecommendation } from './PlantRecommendationCard';
 
 interface GuidedPlantingFlowProps {
-  onClose: () => void;
-  onComplete: (plant: Omit<Plant, 'id'>) => void;
+  onClose: () => void ;
+  onComplete: (plant: Omit<Plant, 'id'>) => Promise<void>;
   plant: PlantRecommendation;
 }
 

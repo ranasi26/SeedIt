@@ -5,8 +5,8 @@ import type { Plant } from '../App';
 interface PlantDetailDialogProps {
   plant: Plant;
   onClose: () => void;
-  onUpdate: (plant: Plant) => void;
-  onDelete: (id: string) => void;
+  onUpdate: (plant: Plant) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   daysUntilWater: number;
 }
 
@@ -14,39 +14,46 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
   const [isEditing, setIsEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState(plant.notes);
 
-  const handleWater = () => {
-    onUpdate({
+  const handleWater = async () => {
+  try {
+    const updatedPlant = {
       ...plant,
       lastWatered: new Date()
-    });
-  };
+    };
 
-  const handleSaveNotes = () => {
-    onUpdate({
+    await onUpdate(updatedPlant);
+    onClose();
+  } catch (error) {
+    console.error("Failed to mark plant as watered:", error);
+    alert("Failed to update watering status.");
+  }
+};
+
+  const handleSaveNotes = async () => {
+  try {
+    await onUpdate({
       ...plant,
       notes: editedNotes
     });
     setIsEditing(false);
-  };
+  } catch (error) {
+    console.error("Failed to save notes:", error);
+    alert("Failed to save notes.");
+  }
+};
 
-  const handleDelete = () => {
-    if (window.confirm(`Are you sure you want to delete ${plant.name}?`)) {
-      onDelete(plant.id);
-    }
-  };
+  const handleDelete = async () => {
+  if (!window.confirm(`Are you sure you want to delete ${plant.name}?`)) return;
 
-  const getSunlightLabel = (level: string) => {
-    switch (level) {
-      case 'low':
-        return 'Low light';
-      case 'medium':
-        return 'Medium light';
-      case 'high':
-        return 'Bright light';
-      default:
-        return level;
-    }
-  };
+  try {
+    await onDelete(plant.id);
+    onClose();
+  } catch (error) {
+    console.error("Failed to delete plant:", error);
+    alert("Failed to delete plant.");
+  }
+};
+
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -59,7 +66,7 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
     return `${Math.floor(diffDays / 30)} months ago`;
   };
 
-  const needsWater = daysUntilWater <= 1;
+  const needsWater = daysUntilWater <= 0;
   const isOverdue = daysUntilWater < 0;
 
   return (
@@ -168,13 +175,25 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
           </div>
 
           <div className="space-y-3 pt-2">
-            <button
-              onClick={handleWater}
-              className="w-full py-4 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Droplet className="w-5 h-5" />
-              <span>Mark as Watered</span>
-            </button>
+            {needsWater ? (
+              <button
+                onClick={handleWater}
+                className="w-full py-4 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 shadow-sm"
+              >
+                <Droplet className="w-5 h-5" />
+                <span>{isOverdue ? 'Water Now' : 'Mark as Watered'}</span>
+              </button>
+            ) : (
+              <div className="w-full py-4 rounded-xl bg-gray-100 text-gray-500 flex flex-col items-center justify-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <Droplet className="w-5 h-5" />
+                    <span>Water not needed yet</span>
+                  </div>
+                  <span className="text-sm">
+                    Next watering in {daysUntilWater} day{daysUntilWater !== 1 ? 's' : ''}
+                  </span>
+                </div>
+            )}
 
             <button
               onClick={handleDelete}

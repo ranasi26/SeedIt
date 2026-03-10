@@ -11,7 +11,7 @@ import {
 
 
 interface AuthPageProps {
-  onLogin: (email: string, name: string) => void;
+  onLogin: (email: string, name: string) => Promise<void>;
 }
 
 export function AuthPage({ onLogin }: AuthPageProps) {

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { AuthPage } from './components/AuthPage';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { WebMainApp } from './components/WebMainApp';
+import { saveUserProfile, getUserProfile } from './service/users';
+import { getUserPlants, saveUserPlant, updateUserPlant, deleteUserPlant } from './service/userPlants';
 
 
 
@@ -35,27 +37,53 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [plants, setPlants] = useState<Plant[]>([]);
 
-  const handleLogin = (email: string, name: string) => {
-    setUser({
-      email,
-      name,
-      spaceType: 'apartment',
-      outdoorAccess: 'none',
-      sunlightHours: 'medium',
-      spaceSize: 'small',
-      experience: 'beginner',
-      goals: []
-    });
+const handleLogin = async (email: string, name: string) => {
+  const existingUser = await getUserProfile(email);
+  const existingPlants = await getUserPlants(email);
+
+  setPlants(existingPlants);
+
+  if (existingUser && existingUser.hasCompletedOnboarding) {
+    setUser(existingUser);
     setIsAuthenticated(true);
+    setHasCompletedOnboarding(true);
+    return;
+  }
+
+  const newUser: UserProfile = {
+    email,
+    name,
+    spaceType: 'apartment',
+    outdoorAccess: 'none',
+    sunlightHours: 'medium',
+    spaceSize: 'small',
+    experience: 'beginner',
+    goals: []
   };
 
-  const handleOnboardingComplete = (profile: Partial<UserProfile>) => {
-    if (user) {
-      setUser({ ...user, ...profile });
-      setHasCompletedOnboarding(true);
-    }
-  };
+  setUser(newUser);
+  setIsAuthenticated(true);
+  setHasCompletedOnboarding(false);
+};
+
+  const handleOnboardingComplete = async (profile: Partial<UserProfile>) => {
+  if (user) {
+    const updatedUser = { ...user, ...profile } as UserProfile;
+
+    setUser(updatedUser);
+    setHasCompletedOnboarding(true);
+
+    await saveUserProfile(updatedUser);
+  }
+};
+
+ const handleExitOnboarding = () => {
+  setIsAuthenticated(false);
+  setHasCompletedOnboarding(false);
+  setUser(null);
+};
 
   const handleLogout = () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -65,15 +93,77 @@ export default function App() {
     }
   };
 
+  const handleAddPlant = async (plant: Omit<Plant, 'id'>) => {
+  if (!user) return;
+
+  const firebaseId = await saveUserPlant({
+    userEmail: user.email,
+    userName: user.name,
+    plantName: plant.name,
+    species: plant.species,
+    image: plant.image,
+    waterFrequency: plant.waterFrequency,
+    sunlight: plant.sunlight,
+    notes: plant.notes,
+    difficulty: plant.difficulty,
+  });
+
+  const newPlant: Plant = {
+    ...plant,
+    id: firebaseId,
+  };
+
+  setPlants((prev) => [...prev, newPlant]);
+};
+
+const handleUpdatePlant = async (updatedPlant: Plant) => {
+  await updateUserPlant({
+    id: updatedPlant.id,
+    name: updatedPlant.name,
+    species: updatedPlant.species,
+    image: updatedPlant.image,
+    waterFrequency: updatedPlant.waterFrequency,
+    lastWatered: updatedPlant.lastWatered,
+    sunlight: updatedPlant.sunlight,
+    notes: updatedPlant.notes,
+    plantedDate: updatedPlant.plantedDate,
+    currentStage: updatedPlant.currentStage,
+    difficulty: updatedPlant.difficulty,
+    tags: updatedPlant.tags,
+  });
+
+  setPlants((prev) =>
+    prev.map((p) => (p.id === updatedPlant.id ? updatedPlant : p))
+  );
+};
+
+const handleDeletePlant = async (id: string) => {
+  await deleteUserPlant(id);
+  setPlants((prev) => prev.filter((p) => p.id !== id));
+};
+
   if (!isAuthenticated) {
     return <AuthPage onLogin={handleLogin} />;
   }
 
   if (!hasCompletedOnboarding) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+    return (
+  <OnboardingFlow
+    onComplete={handleOnboardingComplete}
+    onExit={handleExitOnboarding}
+  />
+);
   }
 
-  return <WebMainApp user={user!} onLogout={handleLogout} />;
-
+  return (
+  <WebMainApp
+    user={user!}
+    plants={plants}
+    onAddPlant={handleAddPlant}
+    onUpdatePlant={handleUpdatePlant}
+    onDeletePlant={handleDeletePlant}
+    onLogout={handleLogout}
+  />
+);
 
 }

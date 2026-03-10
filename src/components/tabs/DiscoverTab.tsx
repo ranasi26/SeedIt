@@ -7,7 +7,7 @@ import { PlantRecommendationCard, type PlantRecommendation } from '../PlantRecom
 interface DiscoverTabProps {
   user: UserProfile;
   plants: Plant[];
-  onAddPlant: (plant: Omit<Plant, 'id'>) => void;
+  onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
 }
 
 export function DiscoverTab({ user, plants, onAddPlant }: DiscoverTabProps) {
@@ -220,13 +220,7 @@ export function DiscoverTab({ user, plants, onAddPlant }: DiscoverTabProps) {
 
       {sortedRecommendations.length === 0 && (
         <div className="text-center py-12">
-          <p className="text-gray-500">No plants match these filters</p>
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className="mt-2 text-green-600 hover:text-green-700"
-          >
-            View all recommendations
-          </button>
+          <p className="text-gray-500">No plants match your current settings.</p>
         </div>
       )}
 
@@ -238,8 +232,8 @@ export function DiscoverTab({ user, plants, onAddPlant }: DiscoverTabProps) {
             setShowGuidedFlow(false);
             setSelectedPlant(null);
           }}
-          onComplete={(plant) => {
-            onAddPlant(plant);
+          onComplete={async (plant) => {
+            await onAddPlant(plant);
             setShowGuidedFlow(false);
             setSelectedPlant(null);
           }}

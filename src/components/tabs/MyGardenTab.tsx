@@ -5,8 +5,8 @@ import { PlantDetailDialog } from '../PlantDetailDialog';
 
 interface MyGardenTabProps {
   plants: Plant[];
-  onUpdatePlant: (plant: Plant) => void;
-  onDeletePlant: (id: string) => void;
+  onUpdatePlant: (plant: Plant) => Promise<void>;
+  onDeletePlant: (id: string) => Promise<void>;
 }
 
 export function MyGardenTab({ plants, onUpdatePlant, onDeletePlant }: MyGardenTabProps) {
@@ -25,7 +25,7 @@ export function MyGardenTab({ plants, onUpdatePlant, onDeletePlant }: MyGardenTa
     );
   };
 
-  const plantsNeedingWater = plants.filter(p => getDaysUntilWater(p) <= 1);
+  const plantsNeedingWater = plants.filter(p => getDaysUntilWater(p) <= 0);
 
   const getStageEmoji = (stage: string) => {
     switch (stage) {
@@ -122,7 +122,7 @@ export function MyGardenTab({ plants, onUpdatePlant, onDeletePlant }: MyGardenTa
           {plants.map(plant => {
             const daysUntilWater = getDaysUntilWater(plant);
             const daysSincePlanted = getDaysSincePlanted(plant);
-            const needsWater = daysUntilWater <= 1;
+            const needsWater = daysUntilWater <= 0;
             const isOverdue = daysUntilWater < 0;
 
             return (

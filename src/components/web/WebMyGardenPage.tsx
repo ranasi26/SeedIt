@@ -3,8 +3,8 @@ import type { Plant } from '../../App';
 
 interface WebMyGardenPageProps {
   plants: Plant[];
-  onUpdatePlant: (plant: Plant) => void;
-  onDeletePlant: (id: string) => void;
+  onUpdatePlant: (plant: Plant) => Promise<void>;
+  onDeletePlant: (id: string) => Promise<void>;
 }
 
 export function WebMyGardenPage({ plants, onUpdatePlant, onDeletePlant }: WebMyGardenPageProps) {

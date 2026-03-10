@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Sun, Droplet, Home, Calendar, ArrowLeft, Plus, Check } from 'lucide-react';
 import type { UserProfile, Plant } from '../../App';
 import { getRecommendations } from '../../service/recommendations';
-import type { Preferences, PlantItem } from '../../service/recommendations';
+import type { PlantItem } from '../../service/recommendations';
+
 
 interface RecommendedPlant {
   name: string;
@@ -21,7 +22,7 @@ interface RecommendedPlant {
 interface PlantRecommendationsPageProps {
   user: UserProfile;
   plants: Plant[];
-  onAddPlant: (plant: Omit<Plant, 'id'>) => void;
+  onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
   onBack: () => void;
 }
 
@@ -97,25 +98,31 @@ useEffect(() => {
   // Recommendations based on user profile
  
 
-  const handleAddPlant = (recommended: RecommendedPlant) => {
-    const newPlant: Omit<Plant, 'id'> = {
-      name: recommended.name,
-      species: recommended.species,
-      image: recommended.image,
-      waterFrequency: recommended.waterFrequency,
-      lastWatered: new Date(),
-      sunlight: recommended.sunlight,
-      notes: recommended.tips,
-      plantedDate: new Date(),
-      currentStage: 'seed',
-      difficulty: recommended.difficulty,
-      tags: []
-    };
-    
-    onAddPlant(newPlant);
-    setAddedPlants(new Set(addedPlants).add(recommended.name));
-    setSelectedPlant(null);
+  const handleAddPlant = async (recommended: RecommendedPlant) => {
+  const newPlant: Omit<Plant, 'id'> = {
+    name: recommended.name,
+    species: recommended.species,
+    image: recommended.image,
+    waterFrequency: recommended.waterFrequency,
+    lastWatered: new Date(),
+    sunlight: recommended.sunlight,
+    notes: recommended.tips,
+    plantedDate: new Date(),
+    currentStage: 'seed',
+    difficulty: recommended.difficulty,
+    tags: []
   };
+
+  try {
+    await onAddPlant(newPlant);
+
+    setAddedPlants((prev) => new Set(prev).add(recommended.name));
+    setSelectedPlant(null);
+  } catch (error) {
+    console.error("Failed to save plant:", error);
+    alert("Failed to save plant to your garden.");
+  }
+};
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -239,7 +246,7 @@ useEffect(() => {
         {/* Add Button */}
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200">
           <div className="max-w-md mx-auto">
-            {addedPlants.has(selectedPlant.name) ? (
+            {addedPlants.has(selectedPlant.name) || plants.some((p) => p.name === selectedPlant.name) ? (
               <div className="bg-green-100 text-green-700 py-3 rounded-xl text-center">
                 <Check className="w-5 h-5 inline-block mr-2" />
                 Added to your garden!
@@ -286,7 +293,9 @@ useEffect(() => {
 )}
       
         {recommendations.map((plant) => {
-          const isAdded = addedPlants.has(plant.name);
+          const isAdded =
+            addedPlants.has(plant.name) ||
+            plants.some((p) => p.name === plant.name);
           
           return (
             <div

@@ -29,7 +29,7 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
     return plant.waterFrequency - daysSinceWatered;
   };
 
-  const plantsNeedingCare = plants.filter(p => getDaysUntilWater(p) <= 1);
+  const plantsNeedingCare = plants.filter(p => getDaysUntilWater(p) <= 0);
   const upcomingReminders = plants.filter(p => getDaysUntilWater(p) > 1 && getDaysUntilWater(p) <= 3);
 
   return (
@@ -155,7 +155,7 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {plants.slice(0, 6).map(plant => {
               const daysUntilWater = getDaysUntilWater(plant);
-              const needsWater = daysUntilWater <= 1;
+              const needsWater = daysUntilWater <= 0;
               
               return (
                 <div

@@ -6,7 +6,7 @@ import { ImageWithFallback } from './figma/ImageWithFallback';
 interface AddPlantDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (plant: Omit<Plant, 'id'>) => void;
+  onAdd: (plant: Omit<Plant, 'id'>) => Promise<void>;
 }
 
 export function AddPlantDialog({ isOpen, onClose, onAdd }: AddPlantDialogProps) {

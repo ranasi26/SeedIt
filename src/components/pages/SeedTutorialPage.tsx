@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { ArrowLeft, Sprout, Droplet, Sun, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Sprout, CheckCircle2, AlertCircle, Package } from 'lucide-react';
+import type { Plant } from '../../App';
 
 interface SeedTutorialPageProps {
   onBack: () => void;
+  onGoToGarden: () => void;
+  plants: Plant[];
+  onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
 }
 
 interface Tutorial {
@@ -12,25 +16,84 @@ interface Tutorial {
   image: string;
   difficulty: 'easy' | 'medium' | 'hard';
   duration: string;
+
+  plantName: string;
+  species: string;
+  sunlight: 'low' | 'medium' | 'high';
+  waterFrequency: number;
+  tags: string[];
+
+  materials: string[];
+
   steps: {
     title: string;
     description: string;
     tips?: string;
   }[];
+
   warnings?: string[];
 }
 
-export function SeedTutorialPage({ onBack }: SeedTutorialPageProps) {
+export function SeedTutorialPage({ onBack, onGoToGarden, plants, onAddPlant }: SeedTutorialPageProps) {
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
+
+  const isAlreadyAdded =
+    selectedTutorial
+      ? plants.some(
+        (p) => p.name.toLowerCase() === selectedTutorial.plantName.toLowerCase()
+      )
+      : false;
+
+  const handleStartGrowing = async () => {
+    if (!selectedTutorial) return;
+
+    const newPlant: Omit<Plant, 'id'> = {
+      name: selectedTutorial.plantName,
+      species: selectedTutorial.species,
+      image: selectedTutorial.image,
+      waterFrequency: selectedTutorial.waterFrequency,
+      lastWatered: new Date(),
+      sunlight: selectedTutorial.sunlight,
+      notes: `Started from Seed Guide: ${selectedTutorial.name}`,
+      plantedDate: new Date(),
+      currentStage: 'seed',
+      difficulty: selectedTutorial.difficulty,
+      tags: selectedTutorial.tags
+    };
+
+    try {
+      await onAddPlant(newPlant);
+      setSelectedTutorial(null);
+      onGoToGarden();
+    } catch (error) {
+      console.error('Failed to add plant:', error);
+      alert('Failed to add plant to My Garden');
+    }
+  };
 
   const tutorials: Tutorial[] = [
     {
       id: 'tomato',
       name: 'Tomato Seeds',
+      plantName: 'Tomato',
+      species: 'Solanum lycopersicum',
       fruit: '🍅',
       image: 'https://images.unsplash.com/photo-1748432171507-c1d62fe2e859?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx0b21hdG8lMjBwbGFudCUyMGdyb3dpbmd8ZW58MXx8fHwxNzY4MzYxMDE3fDA&ixlib=rb-4.1.0&q=80&w=1080',
       difficulty: 'easy',
       duration: '7 days prep + 60-80 days to harvest',
+      sunlight: 'high',
+      waterFrequency: 2,
+      tags: ['vegetables', 'seeds'],
+      materials: [
+        'Ripe tomato',
+        'Knife or spoon',
+        'Small bowl',
+        'Water',
+        'Fine strainer',
+        'Paper towel or paper plate',
+        'Seed-starting mix',
+        'Small pot or tray'
+      ],
       steps: [
         {
           title: 'Choose Your Tomato',
@@ -72,6 +135,19 @@ export function SeedTutorialPage({ onBack }: SeedTutorialPageProps) {
       image: 'https://images.unsplash.com/photo-1632819773825-2b801de6c2d9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYWxjb255JTIwZ2FyZGVuJTIwdXJiYW58ZW58MXx8fHwxNzY4NDIyMzQyfDA&ixlib=rb-4.1.0&q=80&w=1080',
       difficulty: 'medium',
       duration: '3 days prep + 75-90 days to harvest',
+      plantName: 'Bell Pepper',
+      species: 'Capsicum annuum',
+      sunlight: 'high',
+      waterFrequency: 3,
+      tags: ['vegetables', 'seeds'],
+      materials: [
+        'Fully ripe bell pepper',
+        'Knife',
+        'Paper towel',
+        'Small container or seed tray',
+        'Seed-starting mix',
+        'Water'
+      ],
       steps: [
         {
           title: 'Select a Ripe Pepper',
@@ -108,6 +184,18 @@ export function SeedTutorialPage({ onBack }: SeedTutorialPageProps) {
       image: 'https://images.unsplash.com/photo-1627730327661-9b5efb7d47b9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwbGFudCUyMGNhcmUlMjB3YXRlcmluZ3xlbnwxfHx8fDE3Njg0MjIzNDJ8MA&ixlib=rb-4.1.0&q=80&w=1080',
       difficulty: 'easy',
       duration: '3-5 days to sprout + ongoing harvest',
+      plantName: 'Lettuce',
+      species: 'Lactuca sativa',
+      sunlight: 'medium',
+      waterFrequency: 2,
+      tags: ['vegetables', 'regrowth'],
+      materials: [
+        'Lettuce base or stump',
+        'Shallow bowl',
+        'Water',
+        'Sunny windowsill',
+        'Optional: pot and soil'
+      ],
       steps: [
         {
           title: 'Save the Stump',
@@ -144,6 +232,18 @@ export function SeedTutorialPage({ onBack }: SeedTutorialPageProps) {
       image: 'https://images.unsplash.com/photo-1652366358812-6fde6d1f1caf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpbmRvb3IlMjBwbGFudHMlMjBhcGFydG1lbnR8ZW58MXx8fHwxNzY4NDIyMzQwfDA&ixlib=rb-4.1.0&q=80&w=1080',
       difficulty: 'easy',
       duration: '5-7 days to regrow + continuous harvest',
+      plantName: 'Green Onion',
+      species: 'Allium fistulosum',
+      sunlight: 'medium',
+      waterFrequency: 2,
+      tags: ['vegetables', 'regrowth'],
+      materials: [
+        'Green onion root ends',
+        'Glass or jar',
+        'Water',
+        'Sunny spot',
+        'Optional: pot and soil'
+      ],
       steps: [
         {
           title: 'Save the Roots',
@@ -180,6 +280,19 @@ export function SeedTutorialPage({ onBack }: SeedTutorialPageProps) {
       image: 'https://images.unsplash.com/photo-1618343619081-e65a0559a91d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZXJicyUyMHdpbmRvd3NpbGx8ZW58MXx8fHwxNzY4NDIyMzQxfDA&ixlib=rb-4.1.0&q=80&w=1080',
       difficulty: 'easy',
       duration: '7-14 days to root + 30 days to harvest',
+      plantName: 'Basil',
+      species: 'Ocimum basilicum',
+      sunlight: 'medium',
+      waterFrequency: 2,
+      tags: ['herbs', 'cuttings'],
+      materials: [
+        'Fresh basil stems',
+        'Clean scissors',
+        'Glass or jar',
+        'Water',
+        'Small pot',
+        'Potting soil'
+      ],
       steps: [
         {
           title: 'Get Fresh Basil',
@@ -276,6 +389,23 @@ export function SeedTutorialPage({ onBack }: SeedTutorialPageProps) {
               </div>
             )}
 
+            <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
+  <div className="flex items-start gap-3">
+    <Package className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+    <div className="flex-1">
+      <p className="text-gray-900 mb-3">What You Need</p>
+      <div className="space-y-2">
+        {selectedTutorial.materials.map((item, index) => (
+          <div key={index} className="flex items-start gap-3">
+            <div className="w-2 h-2 rounded-full bg-green-500 mt-2 flex-shrink-0" />
+            <p className="text-sm text-gray-700">{item}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</div>
+
             {/* Steps */}
             <div>
               <h3 className="text-gray-900 mb-3">Step-by-Step Guide</h3>
@@ -317,6 +447,22 @@ export function SeedTutorialPage({ onBack }: SeedTutorialPageProps) {
                 </div>
               </div>
             </div>
+
+<div className="pt-2">
+  {isAlreadyAdded ? (
+    <div className="w-full py-4 rounded-xl bg-gray-100 text-gray-500 text-center">
+      Already in My Garden
+    </div>
+  ) : (
+    <button
+      onClick={handleStartGrowing}
+      className="w-full py-4 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm"
+    >
+      Start Growing This Plant
+    </button>
+  )}
+</div>
+
           </div>
         </div>
       </div>

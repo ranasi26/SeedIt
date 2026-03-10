@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Camera, Upload, AlertCircle, CheckCircle2, Leaf, Bug, Droplet, Sun, Loader2, Info } from 'lucide-react';
+import { Camera, Upload, AlertCircle, CheckCircle2, Leaf, Bug, Droplet, Loader2, Info } from 'lucide-react';
 
 interface PlantHealthResult {
   plantName?: string;
@@ -27,8 +27,69 @@ export function WebPlantHealthPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Plant.id API configuration
-  const API_KEY = 'Yj2VAnDe1w8FYOQWoaMQAP2YpO3vWv4ZGAosWd21h4uoA9FhAT'; 
-  const API_ENDPOINT = 'https://api.plant.id/v2/health_assessment';
+ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+const analyzePlant = async (base64Image: string) => {
+  setIsAnalyzing(true);
+  setResult(null);
+  setError(null);
+
+  try {
+    const base64Data = base64Image.split(',')[1];
+
+    const response = await fetch(`${API_URL}/api/analyze-plant`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        imageBase64: base64Data,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    const healthAssessment = data.health_assessment;
+    const isHealthy = healthAssessment?.is_healthy;
+    const diseases = healthAssessment?.diseases || [];
+    const suggestions = data.suggestions || [];
+
+    const parsedResult: PlantHealthResult = {
+      healthStatus: isHealthy ? 'healthy' : diseases.length > 0 ? 'diseased' : 'unknown',
+      diseases: diseases.map((disease: any) => ({
+        name: disease.name,
+        probability: disease.probability,
+        description: disease.disease_details?.description || 'No description available',
+        treatment:
+          disease.disease_details?.treatment?.chemical?.join(', ') ||
+          disease.disease_details?.treatment?.biological?.join(', ') ||
+          'Consult a local plant expert',
+      })),
+      suggestions: suggestions.slice(0, 3).map((sug: any) => ({
+        id: sug.id,
+        name: sug.plant_name,
+        probability: sug.probability,
+      })),
+    };
+
+    if (suggestions.length > 0) {
+      parsedResult.plantName = suggestions[0].plant_name;
+      parsedResult.scientificName = suggestions[0].plant_details?.scientific_name;
+      parsedResult.probability = suggestions[0].probability;
+    }
+
+    setResult(parsedResult);
+  } catch (err) {
+    console.error('Plant analysis error:', err);
+    setError('Failed to analyze the image. Please try again.');
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -44,104 +105,6 @@ export function WebPlantHealthPage() {
       await analyzePlant(base64Image);
     };
     reader.readAsDataURL(file);
-  };
-
-  const analyzePlant = async (base64Image: string) => {
-    setIsAnalyzing(true);
-    setResult(null);
-    setError(null);
-
-    try {
-      // Check if API key is set
-      if (!API_KEY) {
-        // Demo mode - show mock results
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setResult({
-          plantName: 'Tomato Plant',
-          scientificName: 'Solanum lycopersicum',
-          probability: 0.95,
-          healthStatus: 'diseased',
-          diseases: [
-            {
-              name: 'Early Blight',
-              probability: 0.87,
-              description: 'A fungal disease that causes dark spots with concentric rings on older leaves.',
-              treatment: 'Remove affected leaves, improve air circulation, apply fungicide, avoid overhead watering.'
-            },
-            {
-              name: 'Nutrient Deficiency (Nitrogen)',
-              probability: 0.45,
-              description: 'Yellowing of lower leaves may indicate nitrogen deficiency.',
-              treatment: 'Apply nitrogen-rich fertilizer or compost. Monitor improvement over 1-2 weeks.'
-            }
-          ],
-          suggestions: [
-            { id: '1', name: 'Tomato Plant', probability: 0.95 },
-            { id: '2', name: 'Cherry Tomato', probability: 0.78 }
-          ]
-        });
-        setIsAnalyzing(false);
-        return;
-      }
-
-      // Real API call
-      const base64Data = base64Image.split(',')[1];
-      
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Api-Key': API_KEY,
-        },
-        body: JSON.stringify({
-          images: [base64Data],
-          modifiers: ['crops_fast', 'similar_images'],
-          disease_details: ['cause', 'common_names', 'classification', 'description', 'treatment', 'url'],
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      // Parse the API response
-      const healthAssessment = data.health_assessment;
-      const isHealthy = healthAssessment?.is_healthy;
-      const diseases = healthAssessment?.diseases || [];
-      const suggestions = data.suggestions || [];
-
-      const parsedResult: PlantHealthResult = {
-        healthStatus: isHealthy ? 'healthy' : diseases.length > 0 ? 'diseased' : 'unknown',
-        diseases: diseases.map((disease: any) => ({
-          name: disease.name,
-          probability: disease.probability,
-          description: disease.disease_details?.description || 'No description available',
-          treatment: disease.disease_details?.treatment?.chemical?.join(', ') || 
-                    disease.disease_details?.treatment?.biological?.join(', ') || 
-                    'Consult a local plant expert',
-        })),
-        suggestions: suggestions.slice(0, 3).map((sug: any) => ({
-          id: sug.id,
-          name: sug.plant_name,
-          probability: sug.probability,
-        })),
-      };
-
-      if (suggestions.length > 0) {
-        parsedResult.plantName = suggestions[0].plant_name;
-        parsedResult.scientificName = suggestions[0].plant_details?.scientific_name;
-        parsedResult.probability = suggestions[0].probability;
-      }
-
-      setResult(parsedResult);
-    } catch (err) {
-      console.error('Plant analysis error:', err);
-      setError('Failed to analyze the image. Please try again or check your API configuration.');
-    } finally {
-      setIsAnalyzing(false);
-    }
   };
 
   const resetAnalysis = () => {

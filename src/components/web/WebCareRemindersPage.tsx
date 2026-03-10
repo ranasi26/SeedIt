@@ -3,9 +3,16 @@ import type { Plant } from '../../App';
 
 interface WebCareRemindersPageProps {
   plants: Plant[];
-  onUpdatePlant: (plant: Plant) => void;
+  onUpdatePlant: (plant: Plant) => Promise<void>;
+  onDeletePlant: (id: string) => Promise<void>;
 }
 
-export function WebCareRemindersPage({ plants, onUpdatePlant }: WebCareRemindersPageProps) {
-  return <CareRemindersPage plants={plants} onUpdatePlant={onUpdatePlant} onBack={() => {}} />;
+export function WebCareRemindersPage({ plants, onUpdatePlant, onDeletePlant }: WebCareRemindersPageProps) {
+  return <CareRemindersPage
+  plants={plants}
+  onUpdatePlant={onUpdatePlant}
+  onDeletePlant={onDeletePlant}
+  onBack={() => {}}
+/>;
 }
+

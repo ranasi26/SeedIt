@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { 
-  Home, 
-  Sprout, 
-  User as UserIcon, 
-  LogOut, 
+import {
+  Home,
+  Sprout,
+  User as UserIcon,
+  LogOut,
   Bell,
   BookOpen,
   Camera,
@@ -24,29 +24,23 @@ import { SeedItLogo } from './SeedItLogo';
 
 interface WebMainAppProps {
   user: UserProfile;
+  plants: Plant[];
+  onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
+  onUpdatePlant: (plant: Plant) => Promise<void>;
+  onDeletePlant: (id: string) => Promise<void>;
   onLogout: () => void;
 }
 
-export function WebMainApp({ user, onLogout }: WebMainAppProps) {
+export function WebMainApp({
+  user,
+  plants,
+  onAddPlant,
+  onUpdatePlant,
+  onDeletePlant,
+  onLogout
+}: WebMainAppProps) {
   const [activePage, setActivePage] = useState<string>('home');
-  const [plants, setPlants] = useState<Plant[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const addPlant = (plant: Omit<Plant, 'id'>) => {
-    const newPlant = {
-      ...plant,
-      id: Date.now().toString()
-    };
-    setPlants([...plants, newPlant]);
-  };
-
-  const updatePlant = (updatedPlant: Plant) => {
-    setPlants(plants.map(p => p.id === updatedPlant.id ? updatedPlant : p));
-  };
-
-  const deletePlant = (id: string) => {
-    setPlants(plants.filter(p => p.id !== id));
-  };
 
   const handleNavigate = (page: string) => {
     setActivePage(page);
@@ -61,7 +55,7 @@ export function WebMainApp({ user, onLogout }: WebMainAppProps) {
     return plant.waterFrequency - daysSinceWatered;
   };
 
-  const plantsNeedingCare = plants.filter(p => getDaysUntilWater(p) <= 1);
+  const plantsNeedingCare = plants.filter(p => getDaysUntilWater(p) <= 0);
 
   const navigationItems = [
     { id: 'home', label: 'Dashboard', icon: Home },
@@ -76,9 +70,8 @@ export function WebMainApp({ user, onLogout }: WebMainAppProps) {
   return (
     <div className="h-screen bg-gray-50 flex overflow-hidden">
       {/* Sidebar */}
-      <div className={`${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300`}>
+      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-200 flex flex-col transition-transform duration-300`}>
         {/* Logo */}
         <div className="p-6 border-b border-gray-200">
           <div className="flex items-center justify-between">
@@ -105,23 +98,21 @@ export function WebMainApp({ user, onLogout }: WebMainAppProps) {
           {navigationItems.map((item) => {
             const Icon = item.icon;
             const isActive = activePage === item.id;
-            
+
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative ${
-                  isActive
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative ${isActive
                     ? 'bg-green-500 text-white'
                     : 'text-gray-700 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <Icon className="w-5 h-5" />
                 <span>{item.label}</span>
                 {item.badge !== undefined && item.badge > 0 && (
-                  <span className={`ml-auto px-2 py-1 rounded-full text-xs ${
-                    isActive ? 'bg-white text-green-600' : 'bg-green-100 text-green-700'
-                  }`}>
+                  <span className={`ml-auto px-2 py-1 rounded-full text-xs ${isActive ? 'bg-white text-green-600' : 'bg-green-100 text-green-700'
+                    }`}>
                     {item.badge}
                   </span>
                 )}
@@ -177,7 +168,7 @@ export function WebMainApp({ user, onLogout }: WebMainAppProps) {
               <p className="text-sm text-gray-600">Welcome back, {user.name}!</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {plantsNeedingCare.length > 0 && (
               <button
@@ -198,19 +189,35 @@ export function WebMainApp({ user, onLogout }: WebMainAppProps) {
               <WebHomePage user={user} plants={plants} onNavigate={handleNavigate} />
             )}
             {activePage === 'garden' && (
-              <WebMyGardenPage plants={plants} onUpdatePlant={updatePlant} onDeletePlant={deletePlant} />
+              <WebMyGardenPage
+                plants={plants}
+                onUpdatePlant={onUpdatePlant}
+                onDeletePlant={onDeletePlant}
+              />
             )}
             {activePage === 'recommendations' && (
-              <WebPlantRecommendationsPage user={user} plants={plants} onAddPlant={addPlant} />
+              <WebPlantRecommendationsPage
+                user={user}
+                plants={plants}
+                onAddPlant={onAddPlant}
+              />
             )}
             {activePage === 'health-check' && (
               <WebPlantHealthPage />
             )}
             {activePage === 'seed-tutorial' && (
-              <WebSeedTutorialPage />
+              <WebSeedTutorialPage
+                plants={plants}
+                onAddPlant={onAddPlant}
+                onGoToGarden={() => setActivePage('garden')}
+              />
             )}
             {activePage === 'reminders' && (
-              <WebCareRemindersPage plants={plants} onUpdatePlant={updatePlant} />
+              <WebCareRemindersPage
+                plants={plants}
+                onUpdatePlant={onUpdatePlant}
+                onDeletePlant={onDeletePlant}
+              />
             )}
             {activePage === 'profile' && (
               <WebProfilePage user={user} plants={plants} />

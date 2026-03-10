@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Sun, Droplet, Clock, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react';
+import { Droplet, Clock, Plus, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import type { Plant } from '../App';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
@@ -15,13 +15,18 @@ export interface PlantRecommendation {
   whyRecommended: string;
   tags: string[];
   spaceNeeded: string;
+  materials: string[];
+  steps: {
+    title: string;
+    description: string;
+  }[];
 }
 
 interface PlantRecommendationCardProps {
   plant: PlantRecommendation;
-  onAddPlant: (plant: Omit<Plant, 'id'>) => void;
+  onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
   isAlreadyAdded: boolean;
-  onShowGuidedFlow: () => void;
+  onShowGuidedFlow: () => Promise<void>;
 }
 
 export function PlantRecommendationCard({ plant, onAddPlant, isAlreadyAdded, onShowGuidedFlow }: PlantRecommendationCardProps) {

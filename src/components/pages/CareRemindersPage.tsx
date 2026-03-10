@@ -1,15 +1,19 @@
 import { useState } from 'react';
-import { ArrowLeft, Droplet, Sun, Scissors, Calendar, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Droplet, Calendar, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { PlantDetailDialog } from '../PlantDetailDialog';
 import type { Plant } from '../../App';
 
 interface CareRemindersPageProps {
   plants: Plant[];
-  onUpdatePlant: (plant: Plant) => void;
+  onUpdatePlant: (plant: Plant) => Promise<void>;
+  onDeletePlant: (id: string) => Promise<void>;
   onBack: () => void;
 }
 
-export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareRemindersPageProps) {
+export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack }: CareRemindersPageProps) {
   const [filter, setFilter] = useState<'all' | 'urgent' | 'upcoming'>('all');
+
+  const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
 
   const getDaysUntilWater = (plant: Plant) => {
     const daysSinceWatered = Math.floor(
@@ -24,19 +28,26 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
     );
   };
 
-  const handleWaterPlant = (plant: Plant) => {
+  const handleWaterPlant = async (plant: Plant) => {
+  try {
     const updatedPlant = {
       ...plant,
       lastWatered: new Date()
     };
-    onUpdatePlant(updatedPlant);
-  };
+
+    await onUpdatePlant(updatedPlant);
+  } catch (error) {
+    console.error("Failed to mark plant as watered:", error);
+    alert("Failed to update watering status.");
+  }
+};
 
   // Categorize plants
   const urgentPlants = plants.filter(p => getDaysUntilWater(p) <= 0);
-  const todayPlants = plants.filter(p => getDaysUntilWater(p) === 1);
-  const upcomingPlants = plants.filter(p => getDaysUntilWater(p) > 1 && getDaysUntilWater(p) <= 3);
-  const allGoodPlants = plants.filter(p => getDaysUntilWater(p) > 3);
+  const todayPlants = plants.filter(p => getDaysUntilWater(p) === 0);
+  const upcomingPlants = plants.filter(p => getDaysUntilWater(p) > 0 && getDaysUntilWater(p) <= 2);
+  const allGoodPlants = plants.filter(p => getDaysUntilWater(p) > 2);
+  
 
   const filteredPlants = filter === 'urgent' 
     ? [...urgentPlants, ...todayPlants]
@@ -133,7 +144,11 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
                     const daysSincePlanted = getDaysSincePlanted(plant);
                     
                     return (
-                      <div key={plant.id} className="bg-white rounded-2xl p-4 border-2 border-red-200">
+                      <div
+                        key={plant.id}
+                        onClick={() => setSelectedPlant(plant)}
+                        className="bg-white rounded-2xl p-4 border-2 border-red-200 cursor-pointer hover:shadow-md transition-all"
+                      >
                         <div className="flex gap-3">
                           <img
                             src={plant.image}
@@ -157,7 +172,10 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
                             </div>
 
                             <button
-                              onClick={() => handleWaterPlant(plant)}
+                              onClick={(e) => {
+                              e.stopPropagation();
+                              handleWaterPlant(plant);
+                            }}
                               className="w-full bg-red-500 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-red-600 transition-colors"
                             >
                               <Droplet className="w-4 h-4" />
@@ -184,7 +202,11 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
                     const daysSincePlanted = getDaysSincePlanted(plant);
                     
                     return (
-                      <div key={plant.id} className="bg-white rounded-2xl p-4 border-2 border-blue-200">
+                      <div
+                        key={plant.id}
+                        onClick={() => setSelectedPlant(plant)}
+                        className="bg-white rounded-2xl p-4 border-2 border-blue-200 cursor-pointer hover:shadow-md transition-all"
+                      >
                         <div className="flex gap-3">
                           <img
                             src={plant.image}
@@ -208,7 +230,10 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
                             </div>
 
                             <button
-                              onClick={() => handleWaterPlant(plant)}
+                               onClick={(e) => {
+                               e.stopPropagation();
+                              handleWaterPlant(plant);
+                            }}
                               className="w-full bg-blue-500 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
                             >
                               <Droplet className="w-4 h-4" />
@@ -235,7 +260,11 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
                     const daysUntilWater = getDaysUntilWater(plant);
                     
                     return (
-                      <div key={plant.id} className="bg-white rounded-2xl p-4">
+                      <div
+                        key={plant.id}
+                        onClick={() => setSelectedPlant(plant)}
+                        className="bg-white rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                      >
                         <div className="flex gap-3">
                           <img
                             src={plant.image}
@@ -284,7 +313,11 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
                     const daysUntilWater = getDaysUntilWater(plant);
                     
                     return (
-                      <div key={plant.id} className="bg-white rounded-2xl p-4">
+                      <div
+                        key={plant.id}
+                        onClick={() => setSelectedPlant(plant)}
+                        className="bg-white rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                      >
                         <div className="flex items-center gap-3">
                           <img
                             src={plant.image}
@@ -316,6 +349,17 @@ export function CareRemindersPage({ plants, onUpdatePlant, onBack }: CareReminde
           </div>
         </>
       )}
+
+      {selectedPlant && (
+  <PlantDetailDialog
+    plant={selectedPlant}
+    onClose={() => setSelectedPlant(null)}
+    onUpdate={onUpdatePlant}
+    onDelete={onDeletePlant}
+    daysUntilWater={getDaysUntilWater(selectedPlant)}
+  />
+)}
+
     </div>
   );
 }

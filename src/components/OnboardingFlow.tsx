@@ -3,7 +3,7 @@ import { ChevronRight, Home, Sun, Target, Sprout, ArrowLeft } from 'lucide-react
 import type { UserProfile } from '../App';
 
 interface OnboardingFlowProps {
-  onComplete: (profile: Partial<UserProfile>) => void;
+  onComplete: (profile: Partial<UserProfile>) => Promise<void>;
   onExit: () => void;
 }
 

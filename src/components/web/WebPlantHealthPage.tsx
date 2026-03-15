@@ -1,5 +1,11 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Camera, Upload, AlertCircle, CheckCircle2, Leaf, Bug, Droplet, Loader2, Info } from 'lucide-react';
+import type { UserProfile } from '../../App';
+import { saveDiagnosisHistory, getDiagnosisHistory } from '../../service/diagnosisHistory';
+
+interface WebPlantHealthPageProps {
+  user: UserProfile;
+}
 
 interface PlantHealthResult {
   plantName?: string;
@@ -19,77 +25,115 @@ interface PlantHealthResult {
   }>;
 }
 
-export function WebPlantHealthPage() {
+export function WebPlantHealthPage({ user }: WebPlantHealthPageProps) {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<PlantHealthResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<any[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Plant.id API configuration
- const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-const analyzePlant = async (base64Image: string) => {
-  setIsAnalyzing(true);
-  setResult(null);
-  setError(null);
-
-  try {
-    const base64Data = base64Image.split(',')[1];
-
-    const response = await fetch(`${API_URL}/api/analyze-plant`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        imageBase64: base64Data,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+  useEffect(() => {
+    async function loadHistory() {
+      try {
+        console.log('Loading diagnosis history for:', user.email);
+        const items = await getDiagnosisHistory(user.email);
+        console.log('Diagnosis history loaded:', items);
+        setHistory(items);
+      } catch (error) {
+        console.error('Failed to load diagnosis history:', error);
+      }
     }
 
-    const data = await response.json();
-
-    const healthAssessment = data.health_assessment;
-    const isHealthy = healthAssessment?.is_healthy;
-    const diseases = healthAssessment?.diseases || [];
-    const suggestions = data.suggestions || [];
-
-    const parsedResult: PlantHealthResult = {
-      healthStatus: isHealthy ? 'healthy' : diseases.length > 0 ? 'diseased' : 'unknown',
-      diseases: diseases.map((disease: any) => ({
-        name: disease.name,
-        probability: disease.probability,
-        description: disease.disease_details?.description || 'No description available',
-        treatment:
-          disease.disease_details?.treatment?.chemical?.join(', ') ||
-          disease.disease_details?.treatment?.biological?.join(', ') ||
-          'Consult a local plant expert',
-      })),
-      suggestions: suggestions.slice(0, 3).map((sug: any) => ({
-        id: sug.id,
-        name: sug.plant_name,
-        probability: sug.probability,
-      })),
-    };
-
-    if (suggestions.length > 0) {
-      parsedResult.plantName = suggestions[0].plant_name;
-      parsedResult.scientificName = suggestions[0].plant_details?.scientific_name;
-      parsedResult.probability = suggestions[0].probability;
+    if (user?.email) {
+      loadHistory();
     }
+  }, [user.email]);
 
-    setResult(parsedResult);
-  } catch (err) {
-    console.error('Plant analysis error:', err);
-    setError('Failed to analyze the image. Please try again.');
-  } finally {
-    setIsAnalyzing(false);
-  }
-};
+
+  const analyzePlant = async (base64Image: string) => {
+    setIsAnalyzing(true);
+    setResult(null);
+    setError(null);
+
+    try {
+      const base64Data = base64Image.split(',')[1];
+
+      const response = await fetch(`${API_URL}/api/analyze-plant`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageBase64: base64Data,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`API error ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+
+      const healthAssessment = data.health_assessment;
+      const isHealthy = healthAssessment?.is_healthy;
+      const diseases = healthAssessment?.diseases || [];
+      const suggestions = data.suggestions || [];
+
+      const parsedResult: PlantHealthResult = {
+        healthStatus: isHealthy ? 'healthy' : diseases.length > 0 ? 'diseased' : 'unknown',
+        diseases: diseases.map((disease: any) => ({
+          name: disease.name,
+          probability: disease.probability,
+          description: disease.disease_details?.description || 'No description available',
+          treatment:
+            disease.disease_details?.treatment?.chemical?.join(', ') ||
+            disease.disease_details?.treatment?.biological?.join(', ') ||
+            'Consult a local plant expert',
+        })),
+        suggestions: suggestions.slice(0, 3).map((sug: any) => ({
+          id: sug.id,
+          name: sug.plant_name,
+          probability: sug.probability,
+        })),
+      };
+
+      if (suggestions.length > 0) {
+        parsedResult.plantName = suggestions[0].plant_name;
+        parsedResult.scientificName = suggestions[0].plant_details?.scientific_name;
+        parsedResult.probability = suggestions[0].probability;
+      }
+
+      setResult(parsedResult);
+
+      try {
+        await saveDiagnosisHistory({
+          userEmail: user.email,
+          userName: user.name,
+          imageUrl: base64Image,
+          plantName: parsedResult.plantName || "Unknown Plant",
+          scientificName: parsedResult.scientificName || "",
+          healthStatus: parsedResult.healthStatus,
+          diseases: parsedResult.diseases || [],
+        });
+
+        const items = await getDiagnosisHistory(user.email);
+        setHistory(items);
+      } catch (historyErr) {
+        console.error('Failed to save diagnosis history:', historyErr);
+      }
+
+    } catch (err: any) {
+      console.error('Plant analysis error:', err);
+      setError(err.message || 'Failed to analyze the image. Please try again.');
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -100,7 +144,7 @@ const analyzePlant = async (base64Image: string) => {
       const base64Image = reader.result as string;
       setUploadedImage(base64Image);
       setError(null);
-      
+
       // Analyze the image
       await analyzePlant(base64Image);
     };
@@ -119,14 +163,14 @@ const analyzePlant = async (base64Image: string) => {
   };
 
   return (
-  <div className="space-y-6">
+    <div className="space-y-6">
 
       {/* Upload Section */}
       {!uploadedImage && (
         <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl p-8 border border-gray-200">
+          <div className="bg-white rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-200">
             <h3 className="text-gray-900 mb-4">Upload Plant Photo</h3>
-            
+
             <input
               ref={fileInputRef}
               type="file"
@@ -138,7 +182,7 @@ const analyzePlant = async (base64Image: string) => {
             <div className="space-y-3 mb-6">
               <button
                 onClick={handleCameraClick}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-4 rounded-xl flex items-center justify-center gap-3 hover:from-green-600 hover:to-emerald-700 transition-all"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 md:py-4 rounded-xl flex items-center justify-center gap-2 md:gap-3 hover:from-green-600 hover:to-emerald-700 transition-all"
               >
                 <Camera className="w-6 h-6" />
                 <span>Take Photo</span>
@@ -146,7 +190,7 @@ const analyzePlant = async (base64Image: string) => {
 
               <button
                 onClick={handleCameraClick}
-                className="w-full bg-gray-100 text-gray-700 py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-gray-200 transition-all"
+                className="w-full bg-gray-100 text-gray-700 py-3 md:py-4 rounded-xl flex items-center justify-center gap-2 md:gap-3 hover:bg-gray-200 transition-all"
               >
                 <Upload className="w-6 h-6" />
                 <span>Upload from Computer</span>
@@ -168,9 +212,9 @@ const analyzePlant = async (base64Image: string) => {
           </div>
 
           {/* Common Issues Reference */}
-          <div className="bg-white rounded-2xl p-8 border border-gray-200">
+          <div className="bg-white rounded-2xl p-4 md:p-6 lg:p-8 border border-gray-200">
             <h3 className="text-gray-900 mb-4">What We Can Detect</h3>
-            
+
             <div className="space-y-4">
               <div className="flex items-start gap-3 p-3 bg-green-50 rounded-xl">
                 <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
@@ -204,6 +248,73 @@ const analyzePlant = async (base64Image: string) => {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {history.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-gray-200">
+          <h3 className="text-gray-900 mb-4">Diagnosis History</h3>
+
+          <div className="space-y-4">
+            {history.map((entry) => (
+              <div
+                key={entry.id}
+                className="border border-gray-200 rounded-2xl p-4"
+              >
+                <div className="flex gap-4">
+                  <img
+                    src={entry.imageUrl}
+                    alt="Diagnosis history"
+                    className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
+                  />
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div>
+                        <h4 className="text-gray-900">
+                          {entry.plantName || 'Unknown Plant'}
+                        </h4>
+                        {entry.scientificName && (
+                          <p className="text-sm text-gray-500 italic">
+                            {entry.scientificName}
+                          </p>
+                        )}
+                      </div>
+
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs ${entry.healthStatus === 'healthy'
+                          ? 'bg-green-100 text-green-700'
+                          : entry.healthStatus === 'diseased'
+                            ? 'bg-red-100 text-red-700'
+                            : 'bg-gray-100 text-gray-700'
+                          }`}
+                      >
+                        {entry.healthStatus}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mb-2">
+                      {entry.createdAt?.toLocaleString?.() || ''}
+                    </p>
+
+                    {entry.diseases && entry.diseases.length > 0 ? (
+                      <div className="space-y-1">
+                        {entry.diseases.slice(0, 2).map((disease: any, index: number) => (
+                          <p key={index} className="text-sm text-gray-700">
+                            {disease.name} ({Math.round(disease.probability * 100)}%)
+                          </p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-green-700">
+                        No significant issues detected.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -246,7 +357,7 @@ const analyzePlant = async (base64Image: string) => {
           <div className="flex gap-4">
             <button
               onClick={resetAnalysis}
-              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors"
+              className="px-4 md:px-6 py-2.5 md:py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-sm md:text-base"
             >
               Analyze Another Photo
             </button>
@@ -305,13 +416,12 @@ const analyzePlant = async (base64Image: string) => {
               )}
 
               {/* Health Status */}
-              <div className={`rounded-2xl p-6 border ${
-                result.healthStatus === 'healthy' 
-                  ? 'bg-green-50 border-green-200' 
-                  : result.healthStatus === 'diseased'
+              <div className={`rounded-2xl p-6 border ${result.healthStatus === 'healthy'
+                ? 'bg-green-50 border-green-200'
+                : result.healthStatus === 'diseased'
                   ? 'bg-red-50 border-red-200'
                   : 'bg-gray-50 border-gray-200'
-              }`}>
+                }`}>
                 <div className="flex items-center gap-3 mb-4">
                   {result.healthStatus === 'healthy' ? (
                     <>
@@ -341,13 +451,13 @@ const analyzePlant = async (base64Image: string) => {
                             {Math.round(disease.probability * 100)}% likely
                           </span>
                         </div>
-                        
+
                         <div className="space-y-3">
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Description:</p>
                             <p className="text-gray-800">{disease.description}</p>
                           </div>
-                          
+
                           <div>
                             <p className="text-sm text-gray-600 mb-1">Treatment:</p>
                             <p className="text-gray-800">{disease.treatment}</p>
@@ -381,6 +491,7 @@ const analyzePlant = async (base64Image: string) => {
           </div>
         </div>
       )}
+
     </div>
   );
 }

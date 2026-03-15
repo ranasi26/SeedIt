@@ -254,7 +254,7 @@ useEffect(() => {
             ) : (
               <button
                 onClick={() => handleAddPlant(selectedPlant)}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2.5 md:py-3 rounded-xl text-sm md:text-base flex items-center justify-center gap-2"
               >
                 <Plus className="w-5 h-5" />
                 Add to My Garden
@@ -303,11 +303,11 @@ useEffect(() => {
               onClick={() => setSelectedPlant(plant)}
               className="bg-white rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-all"
             >
-              <div className="flex gap-4 p-4">
+              <div className="flex gap-3 md:gap-4 p-3 md:p-4">
                 <img
                   src={plant.image}
                   alt={plant.name}
-                  className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
+                  className="w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover flex-shrink-0"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2 mb-2">

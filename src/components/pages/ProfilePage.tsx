@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { 
-  ArrowLeft, 
-  User, 
-  Mail, 
-  Home, 
-  Sun, 
-  Maximize2, 
+import {
+  ArrowLeft,
+  User,
+  Mail,
+  Home,
+  Sun,
+  Maximize2,
   Target,
   Heart,
   Calendar,
@@ -13,6 +13,7 @@ import {
   Award,
   Sprout
 } from 'lucide-react';
+import { PlantDetailDialog } from '../PlantDetailDialog';
 import type { UserProfile, Plant } from '../../App';
 
 interface ProfilePageProps {
@@ -20,31 +21,41 @@ interface ProfilePageProps {
   plants: Plant[];
   onBack: () => void;
   onLogout: () => void;
+  onUpdatePlant: (plant: Plant) => Promise<void>;
+  onDeletePlant: (id: string) => Promise<void>;
 }
 
-export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps) {
+export function ProfilePage({ user, plants, onBack, onLogout, onUpdatePlant, onDeletePlant }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'stats' | 'saved'>('profile');
+  const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
 
   // Calculate stats
   const totalPlants = plants.length;
   const maturePlants = plants.filter(p => p.currentStage === 'mature').length;
   const averageAge = plants.length > 0
     ? Math.floor(plants.reduce((sum, p) => {
-        const days = Math.floor((Date.now() - p.plantedDate.getTime()) / (1000 * 60 * 60 * 24));
-        return sum + days;
-      }, 0) / plants.length)
+      const days = Math.floor((Date.now() - p.plantedDate.getTime()) / (1000 * 60 * 60 * 24));
+      return sum + days;
+    }, 0) / plants.length)
     : 0;
 
   const oldestPlant = plants.length > 0
     ? plants.reduce((oldest, p) => {
-        const days = Math.floor((Date.now() - p.plantedDate.getTime()) / (1000 * 60 * 60 * 24));
-        const oldestDays = Math.floor((Date.now() - oldest.plantedDate.getTime()) / (1000 * 60 * 60 * 24));
-        return days > oldestDays ? p : oldest;
-      })
+      const days = Math.floor((Date.now() - p.plantedDate.getTime()) / (1000 * 60 * 60 * 24));
+      const oldestDays = Math.floor((Date.now() - oldest.plantedDate.getTime()) / (1000 * 60 * 60 * 24));
+      return days > oldestDays ? p : oldest;
+    })
     : null;
 
   const getDaysSincePlanted = (plant: Plant) => {
     return Math.floor((Date.now() - plant.plantedDate.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getDaysUntilWater = (plant: Plant) => {
+    const daysSinceWatered = Math.floor(
+      (Date.now() - plant.lastWatered.getTime()) / (1000 * 60 * 60 * 24)
+    );
+    return plant.waterFrequency - daysSinceWatered;
   };
 
   const getSpaceLabel = (type: string, access: string) => {
@@ -99,31 +110,28 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
         <div className="flex gap-2">
           <button
             onClick={() => setActiveTab('profile')}
-            className={`flex-1 py-2 rounded-xl transition-all ${
-              activeTab === 'profile'
-                ? 'bg-white text-green-600'
-                : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
+            className={`flex-1 py-2 rounded-xl transition-all ${activeTab === 'profile'
+              ? 'bg-white text-green-600'
+              : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
           >
             Profile
           </button>
           <button
             onClick={() => setActiveTab('stats')}
-            className={`flex-1 py-2 rounded-xl transition-all ${
-              activeTab === 'stats'
-                ? 'bg-white text-green-600'
-                : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
+            className={`flex-1 py-2 rounded-xl transition-all ${activeTab === 'stats'
+              ? 'bg-white text-green-600'
+              : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
           >
             Stats
           </button>
           <button
             onClick={() => setActiveTab('saved')}
-            className={`flex-1 py-2 rounded-xl transition-all ${
-              activeTab === 'saved'
-                ? 'bg-white text-green-600'
-                : 'bg-white/20 text-white hover:bg-white/30'
-            }`}
+            className={`flex-1 py-2 rounded-xl transition-all ${activeTab === 'saved'
+              ? 'bg-white text-green-600'
+              : 'bg-white/20 text-white hover:bg-white/30'
+              }`}
           >
             Plants
           </button>
@@ -137,7 +145,7 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
             {/* Growing Space */}
             <div className="bg-white rounded-2xl p-4">
               <h3 className="text-gray-900 mb-3">Your Growing Space</h3>
-              
+
               <div className="space-y-3">
                 <div className="flex items-start gap-3">
                   <div className="bg-green-100 p-2 rounded-xl">
@@ -237,7 +245,7 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
                 <Award className="w-5 h-5 text-yellow-500" />
                 Achievements
               </h3>
-              
+
               <div className="grid grid-cols-2 gap-3">
                 <div className={`rounded-xl p-4 text-center ${totalPlants >= 1 ? 'bg-green-100' : 'bg-gray-100'}`}>
                   <div className="text-3xl mb-2">🌱</div>
@@ -273,7 +281,7 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
             {plants.length > 0 && (
               <div className="bg-white rounded-2xl p-4">
                 <h3 className="text-gray-900 mb-4">Garden Statistics</h3>
-                
+
                 <div className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -281,7 +289,7 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
                       <span className="text-gray-900">{averageAge} days</span>
                     </div>
                     <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full bg-green-500"
                         style={{ width: `${Math.min(averageAge, 100)}%` }}
                       />
@@ -313,7 +321,7 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
                       {(['seed', 'seedling', 'growing', 'mature'] as const).map(stage => {
                         const count = plants.filter(p => p.currentStage === stage).length;
                         const percentage = (count / plants.length) * 100;
-                        
+
                         return (
                           <div key={stage}>
                             <div className="flex items-center justify-between text-sm mb-1">
@@ -321,7 +329,7 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
                               <span className="text-gray-900">{count}</span>
                             </div>
                             <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                              <div 
+                              <div
                                 className="h-full bg-green-500"
                                 style={{ width: `${percentage}%` }}
                               />
@@ -352,9 +360,13 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
             {plants.length > 0 ? (
               plants.map(plant => {
                 const age = getDaysSincePlanted(plant);
-                
+
                 return (
-                  <div key={plant.id} className="bg-white rounded-2xl p-4">
+                  <div
+                    key={plant.id}
+                    onClick={() => setSelectedPlant(plant)}
+                    className="bg-white rounded-2xl p-4 cursor-pointer hover:shadow-md transition-all"
+                  >
                     <div className="flex gap-3">
                       <img
                         src={plant.image}
@@ -364,7 +376,7 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
                       <div className="flex-1 min-w-0">
                         <h4 className="text-gray-900 mb-1">{plant.name}</h4>
                         <p className="text-sm text-gray-600 mb-2">{plant.species}</p>
-                        
+
                         <div className="flex items-center gap-3 text-xs text-gray-600">
                           <span className="flex items-center gap-1">
                             <Calendar className="w-3.5 h-3.5" />
@@ -394,6 +406,16 @@ export function ProfilePage({ user, plants, onBack, onLogout }: ProfilePageProps
           </div>
         )}
       </div>
+
+      {selectedPlant && (
+        <PlantDetailDialog
+          plant={selectedPlant}
+          onClose={() => setSelectedPlant(null)}
+          onUpdate={onUpdatePlant}
+          onDelete={onDeletePlant}
+          daysUntilWater={getDaysUntilWater(selectedPlant)}
+        />
+      )}
     </div>
   );
 }

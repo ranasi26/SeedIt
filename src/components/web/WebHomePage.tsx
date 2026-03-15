@@ -1,7 +1,8 @@
-import { 
-  Sprout, 
-  BookOpen, 
-  Camera, 
+import { useState } from 'react';
+import {
+  Sprout,
+  BookOpen,
+  Camera,
   Bell,
   Droplet,
   TrendingUp,
@@ -10,16 +11,20 @@ import {
   AlertCircle
 } from 'lucide-react';
 import type { UserProfile, Plant } from '../../App';
+import { PlantDetailDialog } from '../PlantDetailDialog';
 
 interface WebHomePageProps {
   user: UserProfile;
   plants: Plant[];
   onNavigate: (page: string) => void;
+  onUpdatePlant: (plant: Plant) => Promise<void>;
+  onDeletePlant: (id: string) => Promise<void>;
 }
 
-export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
+export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeletePlant }: WebHomePageProps) {
   const today = new Date();
   const greeting = today.getHours() < 12 ? 'Good Morning' : today.getHours() < 18 ? 'Good Afternoon' : 'Good Evening';
+  const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
 
   // Calculate care reminders
   const getDaysUntilWater = (plant: Plant) => {
@@ -35,25 +40,25 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
   return (
     <div className="space-y-6">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-8 text-white">
+      <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-4 md:p-6 lg:p-8 text-white">
         <h2 className="mb-2">{greeting}, {user.name}! 👋</h2>
         <p className="text-green-50 mb-6">Your urban garden is growing beautifully</p>
-        
+
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
             <p className="text-3xl mb-1">{plants.length}</p>
             <p className="text-sm text-green-50">Total Plants</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
             <p className="text-3xl mb-1">{plantsNeedingCare.length}</p>
             <p className="text-sm text-green-50">Need Care</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
             <p className="text-3xl mb-1">{plants.filter(p => p.currentStage === 'mature').length}</p>
             <p className="text-sm text-green-50">Mature</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
             <p className="text-3xl mb-1">{upcomingReminders.length}</p>
             <p className="text-sm text-green-50">Upcoming</p>
           </div>
@@ -62,7 +67,7 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
 
       {/* Care Alerts */}
       {plantsNeedingCare.length > 0 && (
-        <div 
+        <div
           onClick={() => onNavigate('reminders')}
           className="bg-blue-500 rounded-2xl p-6 text-white cursor-pointer hover:bg-blue-600 transition-colors"
         >
@@ -91,10 +96,10 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
             onClick={() => onNavigate('recommendations')}
-            className="bg-white rounded-2xl p-6 text-left hover:shadow-lg transition-all border border-gray-200"
+            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200"
           >
-            <div className="bg-green-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
-              <Sprout className="w-7 h-7 text-green-600" />
+            <div className="bg-green-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
+              <Sprout className="w-6 h-6 md:w-7 md:h-7 text-green-600" />
             </div>
             <h4 className="text-gray-900 mb-2">Find Plants</h4>
             <p className="text-sm text-gray-600">Get personalized recommendations for your space</p>
@@ -102,10 +107,10 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
 
           <button
             onClick={() => onNavigate('seed-tutorial')}
-            className="bg-white rounded-2xl p-6 text-left hover:shadow-lg transition-all border border-gray-200"
+            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200"
           >
-            <div className="bg-amber-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
-              <BookOpen className="w-7 h-7 text-amber-600" />
+            <div className="bg-amber-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
+              <BookOpen className="w-6 h-6 md:w-7 md:h-7 text-amber-600" />
             </div>
             <h4 className="text-gray-900 mb-2">Seed Guide</h4>
             <p className="text-sm text-gray-600">Learn to save and reuse seeds from groceries</p>
@@ -113,10 +118,10 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
 
           <button
             onClick={() => onNavigate('health-check')}
-            className="bg-white rounded-2xl p-6 text-left hover:shadow-lg transition-all border border-gray-200"
+            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200"
           >
-            <div className="bg-rose-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
-              <Camera className="w-7 h-7 text-rose-600" />
+            <div className="bg-rose-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
+              <Camera className="w-6 h-6 md:w-7 md:h-7 text-rose-600" />
             </div>
             <h4 className="text-gray-900 mb-2">Health Check</h4>
             <p className="text-sm text-gray-600">AI-powered plant disease detection</p>
@@ -124,15 +129,15 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
 
           <button
             onClick={() => onNavigate('reminders')}
-            className="bg-white rounded-2xl p-6 text-left hover:shadow-lg transition-all border border-gray-200 relative"
+            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200 relative"
           >
             {plantsNeedingCare.length > 0 && (
               <div className="absolute top-4 right-4 bg-red-500 text-white text-sm w-7 h-7 rounded-full flex items-center justify-center">
                 {plantsNeedingCare.length}
               </div>
             )}
-            <div className="bg-purple-100 w-14 h-14 rounded-xl flex items-center justify-center mb-4">
-              <Bell className="w-7 h-7 text-purple-600" />
+            <div className="bg-purple-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
+              <Bell className="w-6 h-6 md:w-7 md:h-7 text-purple-600" />
             </div>
             <h4 className="text-gray-900 mb-2">Care Reminders</h4>
             <p className="text-sm text-gray-600">Track watering and maintenance tasks</p>
@@ -145,7 +150,7 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-gray-900">Your Recent Plants</h3>
-            <button 
+            <button
               onClick={() => onNavigate('garden')}
               className="text-green-600 hover:text-green-700"
             >
@@ -156,22 +161,23 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
             {plants.slice(0, 6).map(plant => {
               const daysUntilWater = getDaysUntilWater(plant);
               const needsWater = daysUntilWater <= 0;
-              
+
               return (
                 <div
                   key={plant.id}
-                  className="bg-white rounded-2xl p-4 border border-gray-200 hover:shadow-md transition-all"
+                  onClick={() => setSelectedPlant(plant)}
+                  className="bg-white rounded-2xl p-3 md:p-4 border border-gray-200 hover:shadow-md transition-all cursor-pointer"
                 >
                   <div className="flex gap-4">
                     <img
                       src={plant.image}
                       alt={plant.name}
-                      className="w-20 h-20 rounded-xl object-cover"
+                      className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover"
                     />
                     <div className="flex-1 min-w-0">
                       <h4 className="text-gray-900 mb-1">{plant.name}</h4>
                       <p className="text-sm text-gray-600 mb-2 truncate">{plant.species}</p>
-                      
+
                       <div className="flex items-center gap-2 text-xs">
                         <span className="capitalize px-2 py-1 bg-green-100 text-green-700 rounded-full">
                           {plant.currentStage}
@@ -246,6 +252,17 @@ export function WebHomePage({ user, plants, onNavigate }: WebHomePageProps) {
           </div>
         </div>
       </div>
+
+      {selectedPlant && (
+        <PlantDetailDialog
+          plant={selectedPlant}
+          onClose={() => setSelectedPlant(null)}
+          onUpdate={onUpdatePlant}
+          onDelete={onDeletePlant}
+          daysUntilWater={getDaysUntilWater(selectedPlant)}
+        />
+      )}
+
     </div>
   );
 }

@@ -13,6 +13,9 @@ interface PlantDetailDialogProps {
 export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUntilWater }: PlantDetailDialogProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedNotes, setEditedNotes] = useState(plant.notes);
+  const [currentNotes, setCurrentNotes] = useState(plant.notes);
+  const [currentStage, setCurrentStage] = useState(plant.currentStage);
+  const stages: Plant['currentStage'][] = ['seed', 'seedling', 'growing', 'mature'];
 
   const handleWater = async () => {
   try {
@@ -29,12 +32,27 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
   }
 };
 
+  const handleStageChange = async (stage: Plant['currentStage']) => {
+  setCurrentStage(stage); // update UI immediately
+
+  try {
+    await onUpdate({
+      ...plant,
+      currentStage: stage
+    });
+  } catch (error) {
+    console.error("Failed to update plant stage:", error);
+    alert("Failed to update plant stage.");
+  }
+};
+
   const handleSaveNotes = async () => {
   try {
     await onUpdate({
       ...plant,
       notes: editedNotes
     });
+    setCurrentNotes(editedNotes);
     setIsEditing(false);
   } catch (error) {
     console.error("Failed to save notes:", error);
@@ -95,7 +113,7 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
           )}
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
           <div>
             <h2 className="text-gray-900 mb-1">{plant.name}</h2>
             <p className="text-gray-500">{plant.species}</p>
@@ -128,6 +146,28 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
             <p className="text-gray-900">{formatDate(plant.lastWatered)}</p>
           </div>
 
+          <div className="bg-gray-50 rounded-xl p-4">
+            <p className="text-sm text-gray-600 mb-3">Growth Stage</p>
+            <div className="grid grid-cols-2 gap-2">
+              {stages.map((stage) => {
+                const isActive = currentStage === stage;
+
+                return (
+                  <button
+                    key={stage}
+                    onClick={() => handleStageChange(stage)}
+                    className={`py-2 rounded-lg border text-sm capitalize transition-colors transition-all duration-150 ${isActive
+                        ? 'bg-green-500 text-white border-green-500'
+                        : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
+                      }`}
+                  >
+                    {stage}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           <div>
             <div className="flex items-center justify-between mb-3">
               <p className="text-gray-700">Notes</p>
@@ -152,7 +192,7 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
                 <div className="flex gap-2">
                   <button
                     onClick={() => {
-                      setEditedNotes(plant.notes);
+                      setEditedNotes(currentNotes);
                       setIsEditing(false);
                     }}
                     className="flex-1 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
@@ -169,7 +209,7 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
               </div>
             ) : (
               <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-4">
-                {plant.notes || 'No notes yet. Tap the edit icon to add care notes!'}
+                {currentNotes || 'No notes yet. Tap the edit icon to add care notes!'}
               </p>
             )}
           </div>
@@ -178,13 +218,13 @@ export function PlantDetailDialog({ plant, onClose, onUpdate, onDelete, daysUnti
             {needsWater ? (
               <button
                 onClick={handleWater}
-                className="w-full py-4 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 shadow-sm"
+                className="w-full py-3 md:py-4 rounded-xl text-sm md:text-base bg-blue-500 text-white hover:bg-blue-600 transition-colors flex items-center justify-center gap-2 shadow-sm"
               >
                 <Droplet className="w-5 h-5" />
                 <span>{isOverdue ? 'Water Now' : 'Mark as Watered'}</span>
               </button>
             ) : (
-              <div className="w-full py-4 rounded-xl bg-gray-100 text-gray-500 flex flex-col items-center justify-center gap-1">
+              <div className="w-full py-3 md:py-4 rounded-xl bg-gray-100 text-gray-500 flex flex-col items-center justify-center gap-1">
                   <div className="flex items-center gap-2">
                     <Droplet className="w-5 h-5" />
                     <span>Water not needed yet</span>

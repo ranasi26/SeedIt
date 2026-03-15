@@ -131,8 +131,8 @@ export function MyGardenTab({ plants, onUpdatePlant, onDeletePlant }: MyGardenTa
                 onClick={() => setSelectedPlant(plant)}
                 className="bg-white rounded-2xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all"
               >
-                <div className="flex gap-4 p-4">
-                  <div className="relative w-20 h-20 flex-shrink-0">
+                <div className="flex gap-3 md:gap-4 p-3 md:p-4">
+                  <div className="relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
                     <img
                       src={plant.image}
                       alt={plant.name}

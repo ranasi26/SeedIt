@@ -79,7 +79,7 @@ export async function getUserPlants(userEmail: string) {
       waterFrequency: data.waterFrequency,
       lastWatered: data.lastWatered?.toDate ? data.lastWatered.toDate() : new Date(),
       sunlight: data.sunlight,
-      notes: data.notes,
+      notes: data.notes || '',
       plantedDate: data.plantedDate?.toDate ? data.plantedDate.toDate() : new Date(),
       currentStage: data.currentStage || "seed",
       difficulty: data.difficulty || "easy",

@@ -44,8 +44,8 @@ export function PlantRecommendationCard({ plant, onAddPlant, isAlreadyAdded, onS
     high: '☀️'
   };
 
-  const handleAdd = () => {
-    onAddPlant({
+  const handleAdd = async () => {
+  await onAddPlant({
       name: plant.name,
       species: plant.species,
       image: plant.image,

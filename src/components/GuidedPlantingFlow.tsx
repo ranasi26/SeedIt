@@ -4,7 +4,7 @@ import type { Plant } from '../App';
 import type { PlantRecommendation } from './PlantRecommendationCard';
 
 interface GuidedPlantingFlowProps {
-  onClose: () => void ;
+  onClose: () => void;
   onComplete: (plant: Omit<Plant, 'id'>) => Promise<void>;
   plant: PlantRecommendation;
 }
@@ -35,11 +35,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
           <div className="space-y-3">
             <button
               onClick={() => setPlantingData({ ...plantingData, potSize: 'small' })}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                plantingData.potSize === 'small'
+              className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all text-left ${plantingData.potSize === 'small'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -54,11 +53,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
             <button
               onClick={() => setPlantingData({ ...plantingData, potSize: 'medium' })}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                plantingData.potSize === 'medium'
+              className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all text-left ${plantingData.potSize === 'medium'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -73,11 +71,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
             <button
               onClick={() => setPlantingData({ ...plantingData, potSize: 'large' })}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                plantingData.potSize === 'large'
+              className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all text-left ${plantingData.potSize === 'large'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -112,11 +109,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
               <div className="space-y-2">
                 <button
                   onClick={() => setPlantingData({ ...plantingData, soilType: 'potting-mix' })}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    plantingData.soilType === 'potting-mix'
+                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${plantingData.soilType === 'potting-mix'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -131,11 +127,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
                 <button
                   onClick={() => setPlantingData({ ...plantingData, soilType: 'cactus-mix' })}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    plantingData.soilType === 'cactus-mix'
+                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${plantingData.soilType === 'cactus-mix'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -150,11 +145,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
                 <button
                   onClick={() => setPlantingData({ ...plantingData, soilType: 'seed-starting' })}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    plantingData.soilType === 'seed-starting'
+                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${plantingData.soilType === 'seed-starting'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -174,11 +168,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
               <div className="space-y-2">
                 <button
                   onClick={() => setPlantingData({ ...plantingData, fertilizer: 'compost' })}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    plantingData.fertilizer === 'compost'
+                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${plantingData.fertilizer === 'compost'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -193,11 +186,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
                 <button
                   onClick={() => setPlantingData({ ...plantingData, fertilizer: 'balanced' })}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    plantingData.fertilizer === 'balanced'
+                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${plantingData.fertilizer === 'balanced'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -212,11 +204,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
                 <button
                   onClick={() => setPlantingData({ ...plantingData, fertilizer: 'none' })}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    plantingData.fertilizer === 'none'
+                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${plantingData.fertilizer === 'none'
                       ? 'border-green-500 bg-green-50'
                       : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-between">
                     <div>
@@ -292,11 +283,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
           <div className="space-y-3">
             <button
               onClick={() => setPlantingData({ ...plantingData, location: 'windowsill' })}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                plantingData.location === 'windowsill'
+              className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all text-left ${plantingData.location === 'windowsill'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -311,11 +301,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
             <button
               onClick={() => setPlantingData({ ...plantingData, location: 'room-center' })}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                plantingData.location === 'room-center'
+              className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all text-left ${plantingData.location === 'room-center'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -330,11 +319,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
             <button
               onClick={() => setPlantingData({ ...plantingData, location: 'low-light' })}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                plantingData.location === 'low-light'
+              className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all text-left ${plantingData.location === 'low-light'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -349,11 +337,10 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
 
             <button
               onClick={() => setPlantingData({ ...plantingData, location: 'balcony' })}
-              className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-                plantingData.location === 'balcony'
+              className={`w-full p-3 md:p-4 rounded-xl border-2 transition-all text-left ${plantingData.location === 'balcony'
                   ? 'border-green-500 bg-green-50'
                   : 'border-gray-200 hover:border-gray-300'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -405,7 +392,7 @@ export function GuidedPlantingFlow({ onClose, onComplete, plant }: GuidedPlantin
     }
   ];
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
@@ -419,7 +406,7 @@ Location: ${plantingData.location}
 ${plantingData.notes}
       `.trim();
 
-      onComplete({
+      await onComplete({
         name: plant.name,
         species: plant.species,
         image: plant.image,
@@ -447,9 +434,9 @@ ${plantingData.notes}
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center">
-      <div className="bg-white w-full rounded-t-3xl max-h-[90vh] overflow-y-auto animate-slideUp">
+      <div className="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl max-h-[90vh] overflow-y-auto animate-slideUp">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-4 rounded-t-3xl z-10">
+        <div className="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 md:py-4 rounded-t-3xl md:rounded-t-3xl z-10">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <h2 className="text-gray-900 mb-1">Planting {plant.name}</h2>
@@ -473,10 +460,10 @@ ${plantingData.notes}
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 md:p-5">
           <div className="text-center mb-6">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-green-500 rounded-2xl mb-3">
-              <Icon className="w-10 h-10 text-white" />
+            <div className="inline-flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-green-500 rounded-2xl mb-3">
+              <Icon className="w-8 h-8 md:w-10 md:h-10 text-white" />
             </div>
             <h3 className="text-gray-900 mb-1">{step.title}</h3>
             <p className="text-sm text-gray-600">{step.description}</p>
@@ -486,12 +473,12 @@ ${plantingData.notes}
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4">
+        <div className="sticky bottom-0 bg-white border-t border-gray-100 p-4 md:p-5">
           <div className="flex gap-3">
             {currentStep > 0 && (
               <button
                 onClick={handleBack}
-                className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-2.5 md:py-3 rounded-xl text-sm md:text-base border-2 border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 md:gap-3"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>Back</span>
@@ -500,7 +487,7 @@ ${plantingData.notes}
             <button
               onClick={handleNext}
               disabled={!canProceed}
-              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-2.5 md:py-3 rounded-xl text-sm md:text-base bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 md:gap-3"
             >
               <span>{currentStep === steps.length - 1 ? 'Start Growing!' : 'Continue'}</span>
               <ChevronRight className="w-5 h-5" />

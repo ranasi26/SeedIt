@@ -104,8 +104,8 @@ export function WebMainApp({
                 key={item.id}
                 onClick={() => handleNavigate(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative ${isActive
-                    ? 'bg-green-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                  ? 'bg-green-500 text-white'
+                  : 'text-gray-700 hover:bg-gray-100'
                   }`}
               >
                 <Icon className="w-5 h-5" />
@@ -153,7 +153,7 @@ export function WebMainApp({
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => setSidebarOpen(true)}
@@ -183,10 +183,16 @@ export function WebMainApp({
         </div>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
             {activePage === 'home' && (
-              <WebHomePage user={user} plants={plants} onNavigate={handleNavigate} />
+              <WebHomePage
+                user={user}
+                plants={plants}
+                onNavigate={handleNavigate}
+                onUpdatePlant={onUpdatePlant}
+                onDeletePlant={onDeletePlant}
+              />
             )}
             {activePage === 'garden' && (
               <WebMyGardenPage
@@ -203,7 +209,7 @@ export function WebMainApp({
               />
             )}
             {activePage === 'health-check' && (
-              <WebPlantHealthPage />
+              <WebPlantHealthPage user={user} />
             )}
             {activePage === 'seed-tutorial' && (
               <WebSeedTutorialPage
@@ -220,7 +226,7 @@ export function WebMainApp({
               />
             )}
             {activePage === 'profile' && (
-              <WebProfilePage user={user} plants={plants} />
+              <WebProfilePage user={user} plants={plants} onUpdatePlant={onUpdatePlant} onDeletePlant={onDeletePlant} />
             )}
           </div>
         </div>

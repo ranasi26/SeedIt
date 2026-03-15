@@ -116,25 +116,32 @@ const handleLogin = async (email: string, name: string) => {
   setPlants((prev) => [...prev, newPlant]);
 };
 
-const handleUpdatePlant = async (updatedPlant: Plant) => {
-  await updateUserPlant({
-    id: updatedPlant.id,
-    name: updatedPlant.name,
-    species: updatedPlant.species,
-    image: updatedPlant.image,
-    waterFrequency: updatedPlant.waterFrequency,
-    lastWatered: updatedPlant.lastWatered,
-    sunlight: updatedPlant.sunlight,
-    notes: updatedPlant.notes,
-    plantedDate: updatedPlant.plantedDate,
-    currentStage: updatedPlant.currentStage,
-    difficulty: updatedPlant.difficulty,
-    tags: updatedPlant.tags,
-  });
+const handleUpdatePlant = async (updatedPlant: Plant): Promise<void> => {
+  try {
+    await updateUserPlant({
+      id: updatedPlant.id,
+      name: updatedPlant.name,
+      species: updatedPlant.species,
+      image: updatedPlant.image,
+      waterFrequency: updatedPlant.waterFrequency,
+      lastWatered: updatedPlant.lastWatered,
+      sunlight: updatedPlant.sunlight,
+      notes: updatedPlant.notes,
+      plantedDate: updatedPlant.plantedDate,
+      currentStage: updatedPlant.currentStage,
+      difficulty: updatedPlant.difficulty,
+      tags: updatedPlant.tags,
+    });
 
-  setPlants((prev) =>
-    prev.map((p) => (p.id === updatedPlant.id ? updatedPlant : p))
-  );
+    setPlants((prev) =>
+      prev.map((plant) =>
+        plant.id === updatedPlant.id ? updatedPlant : plant
+      )
+    );
+  } catch (error) {
+    console.error("Failed to update plant:", error);
+    throw error;
+  }
 };
 
 const handleDeletePlant = async (id: string) => {

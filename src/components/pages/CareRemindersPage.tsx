@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { ArrowLeft, Droplet, Calendar, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { PlantDetailDialog } from '../PlantDetailDialog';
-import type { Plant } from '../../App';
+import type { Plant, UserProfile } from '../../App';
+import type { WeatherData } from '../../service/weather';
 
 interface CareRemindersPageProps {
   plants: Plant[];
   onUpdatePlant: (plant: Plant) => Promise<void>;
   onDeletePlant: (id: string) => Promise<void>;
   onBack: () => void;
+  user: UserProfile;
+  weather: WeatherData | null;
 }
 
-export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack }: CareRemindersPageProps) {
+export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack, user, weather }: CareRemindersPageProps) {
   const [filter, setFilter] = useState<'all' | 'urgent' | 'upcoming'>('all');
 
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
@@ -56,6 +59,28 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
     : plants;
 
   const totalReminders = urgentPlants.length + todayPlants.length + upcomingPlants.length;
+
+  const getWeatherCareMessage = (plant: Plant) => {
+  if (!weather) return null;
+
+  if (weather.rain && user.outdoorAccess !== 'none') {
+    return 'Rain expected today — skip watering outdoor plants unless soil is dry.';
+  }
+
+  if (weather.temperature >= 33) {
+    return 'Hot weather today — check soil sooner because pots may dry faster.';
+  }
+
+  if (weather.windSpeed >= 8 && user.outdoorAccess !== 'none') {
+    return 'Windy conditions — protect lightweight pots and young plants.';
+  }
+
+  if (weather.humidity >= 85) {
+    return 'High humidity today — avoid overwatering and watch for fungal issues.';
+  }
+
+  return null;
+};
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
@@ -182,6 +207,11 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                               Mark as Watered
                             </button>
                           </div>
+                          {getWeatherCareMessage(plant) && (
+  <div className="mt-2 bg-amber-50 rounded-lg p-2">
+    <p className="text-xs text-amber-800">{getWeatherCareMessage(plant)}</p>
+  </div>
+)}
                         </div>
                       </div>
                     );
@@ -240,6 +270,12 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                               Mark as Watered
                             </button>
                           </div>
+
+                          {getWeatherCareMessage(plant) && (
+  <div className="mt-2 bg-amber-50 rounded-lg p-2">
+    <p className="text-xs text-amber-800">{getWeatherCareMessage(plant)}</p>
+  </div>
+)}
                         </div>
                       </div>
                     );
@@ -291,6 +327,12 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                                 <Calendar className="w-4 h-4" />
                                 <span>{getDaysSincePlanted(plant)}d old</span>
                               </div>
+
+                              {getWeatherCareMessage(plant) && (
+  <div className="mt-2 bg-amber-50 rounded-lg p-2">
+    <p className="text-xs text-amber-800">{getWeatherCareMessage(plant)}</p>
+  </div>
+)}
                             </div>
                           </div>
                         </div>

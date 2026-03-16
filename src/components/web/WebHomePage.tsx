@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Sprout,
   BookOpen,
@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import type { UserProfile, Plant } from '../../App';
 import { PlantDetailDialog } from '../PlantDetailDialog';
+import { getCurrentLocation, getWeather, type WeatherData } from '../../service/weather';
+import { getWeatherAlerts } from '../../service/weatherAdvice';
 
 interface WebHomePageProps {
   user: UserProfile;
@@ -19,12 +21,35 @@ interface WebHomePageProps {
   onNavigate: (page: string) => void;
   onUpdatePlant: (plant: Plant) => Promise<void>;
   onDeletePlant: (id: string) => Promise<void>;
+  weather: WeatherData | null;
 }
 
 export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeletePlant }: WebHomePageProps) {
   const today = new Date();
   const greeting = today.getHours() < 12 ? 'Good Morning' : today.getHours() < 18 ? 'Good Afternoon' : 'Good Evening';
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [weatherAlerts, setWeatherAlerts] = useState<{ title: string; message: string; type: string }[]>([]);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadWeather() {
+      try {
+        setWeatherError(null);
+
+        const location = await getCurrentLocation();
+        const weatherData = await getWeather(location.lat, location.lon);
+
+        setWeather(weatherData);
+        setWeatherAlerts(getWeatherAlerts(weatherData, user, plants));
+      } catch (error) {
+        console.error('Failed to load weather:', error);
+        setWeatherError('Unable to load local weather.');
+      }
+    }
+
+    loadWeather();
+  }, [user, plants]);
 
   // Calculate care reminders
   const getDaysUntilWater = (plant: Plant) => {
@@ -43,6 +68,39 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
       <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-4 md:p-6 lg:p-8 text-white">
         <h2 className="mb-2">{greeting}, {user.name}! 👋</h2>
         <p className="text-green-50 mb-6">Your urban garden is growing beautifully</p>
+
+{/* Weather Section */}
+        {weather && weatherAlerts.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200">
+            <div className="flex items-start justify-between gap-4 mb-3">
+              <div>
+                <h3 className="text-gray-900">Weather-Based Care Alerts</h3>
+                <p className="text-sm text-gray-600">
+                  {weather.city ? `${weather.city} • ` : ''}
+                  {Math.round(weather.temperature)}°C • {weather.description}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {weatherAlerts.map((alert, index) => (
+                <div
+                  key={index}
+                  className="rounded-xl p-3 bg-blue-50 border border-blue-100"
+                >
+                  <p className="text-blue-900 mb-1">{alert.title}</p>
+                  <p className="text-sm text-blue-800">{alert.message}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {weatherError && (
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
+            <p className="text-sm text-gray-600">{weatherError}</p>
+          </div>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

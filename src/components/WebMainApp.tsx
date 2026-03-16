@@ -20,11 +20,14 @@ import { WebPlantHealthPage } from './web/WebPlantHealthPage';
 import { WebProfilePage } from './web/WebProfilePage';
 import { WebMyGardenPage } from './web/WebMyGardenPage';
 import { SeedItLogo } from './SeedItLogo';
+import { WeatherData } from '../service/weather';
+
 
 
 interface WebMainAppProps {
   user: UserProfile;
   plants: Plant[];
+  weather: WeatherData | null;
   onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
   onUpdatePlant: (plant: Plant) => Promise<void>;
   onDeletePlant: (id: string) => Promise<void>;
@@ -41,6 +44,7 @@ export function WebMainApp({
 }: WebMainAppProps) {
   const [activePage, setActivePage] = useState<string>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [weather, setWeather] = useState<WeatherData | null>(null);
 
   const handleNavigate = (page: string) => {
     setActivePage(page);
@@ -187,12 +191,13 @@ export function WebMainApp({
           <div className="max-w-7xl mx-auto">
             {activePage === 'home' && (
               <WebHomePage
-                user={user}
-                plants={plants}
-                onNavigate={handleNavigate}
-                onUpdatePlant={onUpdatePlant}
-                onDeletePlant={onDeletePlant}
-              />
+  user={user}
+  plants={plants}
+  onNavigate={handleNavigate}
+  onUpdatePlant={onUpdatePlant}
+  onDeletePlant={onDeletePlant}
+  weather={weather}
+/>
             )}
             {activePage === 'garden' && (
               <WebMyGardenPage
@@ -220,10 +225,12 @@ export function WebMainApp({
             )}
             {activePage === 'reminders' && (
               <WebCareRemindersPage
-                plants={plants}
-                onUpdatePlant={onUpdatePlant}
-                onDeletePlant={onDeletePlant}
-              />
+  plants={plants}
+  onUpdatePlant={onUpdatePlant}
+  onDeletePlant={onDeletePlant}
+  user={user}
+  weather={weather}
+/>
             )}
             {activePage === 'profile' && (
               <WebProfilePage user={user} plants={plants} onUpdatePlant={onUpdatePlant} onDeletePlant={onDeletePlant} />

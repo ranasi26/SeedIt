@@ -17,27 +17,23 @@ app.post("/api/analyze-plant", async (req, res) => {
       return res.status(400).json({ error: "Missing imageBase64" });
     }
 
-    const resp = await fetch("https://api.plant.id/v2/health_assessment", {
+    const resp = await fetch("https://api.plant.id/v2/identify", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Api-Key": process.env.PLANT_ID_KEY,
       },
       body: JSON.stringify({
-        images: [imageBase64],
-        modifiers: ["crops_fast", "similar_images"],
-        disease_details: [
-          "cause",
-          "common_names",
-          "classification",
-          "description",
-          "treatment",
-          "url",
-        ],
-      }),
+  images: [imageBase64],
+  modifiers: ["similar_images"],
+  plant_details: ["common_names", "scientific_name"],
+  disease_details: ["description", "treatment"],
+}),
     });
 
     const data = await resp.json();
+
+    console.log("PLANT.ID RESPONSE:", JSON.stringify(data, null, 2));
 
     if (!resp.ok) {
       return res.status(resp.status).json({

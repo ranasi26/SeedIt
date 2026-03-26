@@ -23,10 +23,9 @@ interface PlantRecommendationsPageProps {
   user: UserProfile;
   plants: Plant[];
   onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
-  onBack: () => void;
 }
 
-export function PlantRecommendationsPage({ user, plants, onAddPlant, onBack }: PlantRecommendationsPageProps) {
+export function PlantRecommendationsPage({ user, plants, onAddPlant }: PlantRecommendationsPageProps) {
   const [selectedPlant, setSelectedPlant] = useState<RecommendedPlant | null>(null);
   const [addedPlants, setAddedPlants] = useState<Set<string>>(new Set());
 
@@ -254,9 +253,9 @@ useEffect(() => {
             ) : (
               <button
                 onClick={() => handleAddPlant(selectedPlant)}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2.5 md:py-3 rounded-xl text-sm md:text-base flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white p-2.5 md:p-3 rounded-xl text-sm md:text-base flex items-center justify-center gap-2"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-5 h-8" />
                 Add to My Garden
               </button>
             )}
@@ -270,13 +269,6 @@ useEffect(() => {
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
       <div className="flex-shrink-0 bg-white p-4 border-b border-gray-200">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
         <h2 className="text-gray-900">Plant Recommendations</h2>
         <p className="text-gray-600">Perfect for your {user.spaceType} with {user.sunlightHours} sunlight</p>
       </div>

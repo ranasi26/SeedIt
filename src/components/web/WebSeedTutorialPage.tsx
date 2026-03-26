@@ -13,7 +13,6 @@ export function WebSeedTutorialPage({ plants, onAddPlant, onGoToGarden }: WebSee
       plants={plants}
       onAddPlant={onAddPlant}
       onGoToGarden={onGoToGarden}
-      onBack={() => {}}
     />
   );
 }

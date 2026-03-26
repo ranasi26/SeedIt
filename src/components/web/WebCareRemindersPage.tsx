@@ -15,7 +15,6 @@ export function WebCareRemindersPage({ plants, onUpdatePlant, onDeletePlant, use
   plants={plants}
   onUpdatePlant={onUpdatePlant}
   onDeletePlant={onDeletePlant}
-  onBack={() => {}}
   user={user}
   weather={weather}
 />;

@@ -3,7 +3,6 @@ import { ArrowLeft, Sprout, CheckCircle2, AlertCircle, Package } from 'lucide-re
 import type { Plant } from '../../App';
 
 interface SeedTutorialPageProps {
-  onBack: () => void;
   onGoToGarden: () => void;
   plants: Plant[];
   onAddPlant: (plant: Omit<Plant, 'id'>) => Promise<void>;
@@ -34,7 +33,7 @@ interface Tutorial {
   warnings?: string[];
 }
 
-export function SeedTutorialPage({ onBack, onGoToGarden, plants, onAddPlant }: SeedTutorialPageProps) {
+export function SeedTutorialPage({ onGoToGarden, plants, onAddPlant }: SeedTutorialPageProps) {
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
 
   const isAlreadyAdded =
@@ -473,13 +472,6 @@ export function SeedTutorialPage({ onBack, onGoToGarden, plants, onAddPlant }: S
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
       <div className="flex-shrink-0 bg-white p-4 border-b border-gray-200">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
         <h2 className="text-gray-900">Seed Reuse Tutorials</h2>
         <p className="text-gray-600">Turn kitchen scraps into thriving plants</p>
       </div>

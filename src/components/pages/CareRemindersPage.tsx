@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Droplet, Calendar, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { Droplet, Calendar, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import { PlantDetailDialog } from '../PlantDetailDialog';
 import type { Plant, UserProfile } from '../../App';
 import type { WeatherData } from '../../service/weather';
@@ -8,12 +8,11 @@ interface CareRemindersPageProps {
   plants: Plant[];
   onUpdatePlant: (plant: Plant) => Promise<void>;
   onDeletePlant: (id: string) => Promise<void>;
-  onBack: () => void;
   user: UserProfile;
   weather: WeatherData | null;
 }
 
-export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack, user, weather }: CareRemindersPageProps) {
+export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant,  user, weather }: CareRemindersPageProps) {
   const [filter, setFilter] = useState<'all' | 'urgent' | 'upcoming'>('all');
 
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
@@ -32,72 +31,65 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
   };
 
   const handleWaterPlant = async (plant: Plant) => {
-  try {
-    const updatedPlant = {
-      ...plant,
-      lastWatered: new Date()
-    };
+    try {
+      const updatedPlant = {
+        ...plant,
+        lastWatered: new Date()
+      };
 
-    await onUpdatePlant(updatedPlant);
-  } catch (error) {
-    console.error("Failed to mark plant as watered:", error);
-    alert("Failed to update watering status.");
-  }
-};
+      await onUpdatePlant(updatedPlant);
+    } catch (error) {
+      console.error("Failed to mark plant as watered:", error);
+      alert("Failed to update watering status.");
+    }
+  };
 
   // Categorize plants
-  const urgentPlants = plants.filter(p => getDaysUntilWater(p) <= 0);
+  const urgentPlants = plants.filter(p => getDaysUntilWater(p) < 0);
   const todayPlants = plants.filter(p => getDaysUntilWater(p) === 0);
   const upcomingPlants = plants.filter(p => getDaysUntilWater(p) > 0 && getDaysUntilWater(p) <= 2);
   const allGoodPlants = plants.filter(p => getDaysUntilWater(p) > 2);
-  
 
-  const filteredPlants = filter === 'urgent' 
+
+  const filteredPlants = filter === 'urgent'
     ? [...urgentPlants, ...todayPlants]
     : filter === 'upcoming'
-    ? upcomingPlants
-    : plants;
+      ? upcomingPlants
+      : plants;
 
   const totalReminders = urgentPlants.length + todayPlants.length + upcomingPlants.length;
 
-  const getWeatherCareMessage = (plant: Plant) => {
-  if (!weather) return null;
+  const getWeatherCareMessage = () => {
+    if (!weather) return null;
 
-  if (weather.rain && user.outdoorAccess !== 'none') {
-    return 'Rain expected today — skip watering outdoor plants unless soil is dry.';
-  }
+    if (weather.rain && user.outdoorAccess !== 'none') {
+      return 'Rain expected today — skip watering outdoor plants unless soil is dry.';
+    }
 
-  if (weather.temperature >= 33) {
-    return 'Hot weather today — check soil sooner because pots may dry faster.';
-  }
+    if (weather.temperature >= 33) {
+      return 'Hot weather today — check soil sooner because pots may dry faster.';
+    }
 
-  if (weather.windSpeed >= 8 && user.outdoorAccess !== 'none') {
-    return 'Windy conditions — protect lightweight pots and young plants.';
-  }
+    if (weather.windSpeed >= 8 && user.outdoorAccess !== 'none') {
+      return 'Windy conditions — protect lightweight pots and young plants.';
+    }
 
-  if (weather.humidity >= 85) {
-    return 'High humidity today — avoid overwatering and watch for fungal issues.';
-  }
+    if (weather.humidity >= 85) {
+      return 'High humidity today — avoid overwatering and watch for fungal issues.';
+    }
 
-  return null;
-};
+    return null;
+  };
 
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
       <div className="flex-shrink-0 bg-white p-4 border-b border-gray-200">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
-        <h2 className="text-gray-900">Care Reminders</h2>
-        <p className="text-gray-600">
-          {totalReminders} task{totalReminders !== 1 ? 's' : ''} need{totalReminders === 1 ? 's' : ''} your attention
-        </p>
-      </div>
+  <h2 className="text-gray-900">Care Reminders</h2>
+  <p className="text-gray-600">
+    {totalReminders} task{totalReminders !== 1 ? 's' : ''} need{totalReminders === 1 ? 's' : ''} your attention
+  </p>
+</div>
 
       {plants.length === 0 ? (
         <div className="flex-1 flex items-center justify-center p-4">
@@ -118,21 +110,19 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-xl transition-all ${
-                  filter === 'all'
+                className={`px-4 py-2 rounded-xl transition-all ${filter === 'all'
                     ? 'bg-green-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 All ({plants.length})
               </button>
               <button
                 onClick={() => setFilter('urgent')}
-                className={`px-4 py-2 rounded-xl transition-all relative ${
-                  filter === 'urgent'
+                className={`px-4 py-2 rounded-xl transition-all relative ${filter === 'urgent'
                     ? 'bg-red-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 Urgent ({urgentPlants.length + todayPlants.length})
                 {(urgentPlants.length + todayPlants.length) > 0 && (
@@ -143,11 +133,10 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
               </button>
               <button
                 onClick={() => setFilter('upcoming')}
-                className={`px-4 py-2 rounded-xl transition-all ${
-                  filter === 'upcoming'
+                className={`px-4 py-2 rounded-xl transition-all ${filter === 'upcoming'
                     ? 'bg-blue-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                  }`}
               >
                 Soon ({upcomingPlants.length})
               </button>
@@ -166,8 +155,7 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                 <div className="space-y-2">
                   {urgentPlants.map(plant => {
                     const daysUntilWater = getDaysUntilWater(plant);
-                    const daysSincePlanted = getDaysSincePlanted(plant);
-                    
+
                     return (
                       <div
                         key={plant.id}
@@ -190,7 +178,7 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                                 {Math.abs(daysUntilWater)}d overdue
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
                               <Droplet className="w-4 h-4 text-red-500" />
                               <span>Last watered {Math.abs(daysUntilWater) + plant.waterFrequency} days ago</span>
@@ -198,21 +186,21 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
 
                             <button
                               onClick={(e) => {
-                              e.stopPropagation();
-                              handleWaterPlant(plant);
-                            }}
+                                e.stopPropagation();
+                                handleWaterPlant(plant);
+                              }}
                               className="w-full bg-red-500 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-red-600 transition-colors"
                             >
                               <Droplet className="w-4 h-4" />
                               Mark as Watered
                             </button>
                           </div>
-                          {getWeatherCareMessage(plant) && (
-  <div className="mt-2 bg-amber-50 rounded-lg p-2">
-    <p className="text-xs text-amber-800">{getWeatherCareMessage(plant)}</p>
-  </div>
-)}
                         </div>
+                        {getWeatherCareMessage() && (
+                          <div className="mt-2 bg-amber-50 rounded-lg p-2">
+                            <p className="text-xs text-amber-800">{getWeatherCareMessage()}</p>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -229,8 +217,7 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                 </h3>
                 <div className="space-y-2">
                   {todayPlants.map(plant => {
-                    const daysSincePlanted = getDaysSincePlanted(plant);
-                    
+
                     return (
                       <div
                         key={plant.id}
@@ -253,30 +240,29 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                                 Today
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
                               <Droplet className="w-4 h-4 text-blue-500" />
                               <span>Water every {plant.waterFrequency} day{plant.waterFrequency > 1 ? 's' : ''}</span>
                             </div>
 
                             <button
-                               onClick={(e) => {
-                               e.stopPropagation();
-                              handleWaterPlant(plant);
-                            }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleWaterPlant(plant);
+                              }}
                               className="w-full bg-blue-500 text-white py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
                             >
                               <Droplet className="w-4 h-4" />
                               Mark as Watered
                             </button>
                           </div>
-
-                          {getWeatherCareMessage(plant) && (
-  <div className="mt-2 bg-amber-50 rounded-lg p-2">
-    <p className="text-xs text-amber-800">{getWeatherCareMessage(plant)}</p>
-  </div>
-)}
                         </div>
+                        {getWeatherCareMessage() && (
+                          <div className="mt-2 bg-amber-50 rounded-lg p-2">
+                            <p className="text-xs text-amber-800">{getWeatherCareMessage()}</p>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -294,7 +280,7 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                 <div className="space-y-2">
                   {upcomingPlants.map(plant => {
                     const daysUntilWater = getDaysUntilWater(plant);
-                    
+
                     return (
                       <div
                         key={plant.id}
@@ -317,7 +303,7 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                                 In {daysUntilWater} day{daysUntilWater > 1 ? 's' : ''}
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-4 text-sm text-gray-600">
                               <div className="flex items-center gap-1">
                                 <Droplet className="w-4 h-4" />
@@ -327,13 +313,12 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                                 <Calendar className="w-4 h-4" />
                                 <span>{getDaysSincePlanted(plant)}d old</span>
                               </div>
-
-                              {getWeatherCareMessage(plant) && (
-  <div className="mt-2 bg-amber-50 rounded-lg p-2">
-    <p className="text-xs text-amber-800">{getWeatherCareMessage(plant)}</p>
-  </div>
-)}
                             </div>
+                            {getWeatherCareMessage() && (
+                              <div className="mt-2 bg-amber-50 rounded-lg p-2">
+                                <p className="text-xs text-amber-800">{getWeatherCareMessage()}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -353,7 +338,7 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
                 <div className="space-y-2">
                   {allGoodPlants.map(plant => {
                     const daysUntilWater = getDaysUntilWater(plant);
-                    
+
                     return (
                       <div
                         key={plant.id}
@@ -393,14 +378,14 @@ export function CareRemindersPage({ plants, onUpdatePlant, onDeletePlant, onBack
       )}
 
       {selectedPlant && (
-  <PlantDetailDialog
-    plant={selectedPlant}
-    onClose={() => setSelectedPlant(null)}
-    onUpdate={onUpdatePlant}
-    onDelete={onDeletePlant}
-    daysUntilWater={getDaysUntilWater(selectedPlant)}
-  />
-)}
+        <PlantDetailDialog
+          plant={selectedPlant}
+          onClose={() => setSelectedPlant(null)}
+          onUpdate={onUpdatePlant}
+          onDelete={onDeletePlant}
+          daysUntilWater={getDaysUntilWater(selectedPlant)}
+        />
+      )}
 
     </div>
   );

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  ArrowLeft,
   User,
   Mail,
   Home,
@@ -19,13 +18,12 @@ import type { UserProfile, Plant } from '../../App';
 interface ProfilePageProps {
   user: UserProfile;
   plants: Plant[];
-  onBack: () => void;
   onLogout: () => void;
   onUpdatePlant: (plant: Plant) => Promise<void>;
   onDeletePlant: (id: string) => Promise<void>;
 }
 
-export function ProfilePage({ user, plants, onBack, onLogout, onUpdatePlant, onDeletePlant }: ProfilePageProps) {
+export function ProfilePage({ user, plants, onLogout, onUpdatePlant, onDeletePlant }: ProfilePageProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'stats' | 'saved'>('profile');
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
 
@@ -87,15 +85,7 @@ export function ProfilePage({ user, plants, onBack, onLogout, onUpdatePlant, onD
   return (
     <div className="h-full flex flex-col bg-gray-50">
       {/* Header */}
-      <div className="flex-shrink-0 bg-gradient-to-br from-green-500 to-emerald-600 text-white p-4">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-2 mb-4 text-white/90 hover:text-white"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span>Back</span>
-        </button>
-
+      <div className="flex-shrink-0 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg text-white p-4">
         <div className="flex items-center gap-4 mb-4">
           <div className="bg-white/20 backdrop-blur-sm p-4 rounded-2xl">
             <User className="w-12 h-12" />

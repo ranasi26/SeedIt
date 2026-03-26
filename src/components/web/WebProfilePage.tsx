@@ -9,5 +9,5 @@ interface WebProfilePageProps {
 }
 
 export function WebProfilePage({ user, plants, onUpdatePlant, onDeletePlant }: WebProfilePageProps) {
-  return <ProfilePage user={user} plants={plants} onBack={() => {}} onLogout={() => {}} onUpdatePlant={onUpdatePlant} onDeletePlant={onDeletePlant} />;
+  return <ProfilePage user={user} plants={plants} onLogout={() => {}} onUpdatePlant={onUpdatePlant} onDeletePlant={onDeletePlant} />;
 }

@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import {
   Sprout,
   BookOpen,
@@ -6,13 +5,13 @@ import {
   Bell,
   Droplet,
   TrendingUp,
-  Calendar,
   Sun,
   AlertCircle
 } from 'lucide-react';
 import type { UserProfile, Plant } from '../../App';
 import { PlantDetailDialog } from '../PlantDetailDialog';
-import { getCurrentLocation, getWeather, type WeatherData } from '../../service/weather';
+import { useState, useMemo } from 'react';
+import type { WeatherData } from '../../service/weather';
 import { getWeatherAlerts } from '../../service/weatherAdvice';
 
 interface WebHomePageProps {
@@ -24,34 +23,28 @@ interface WebHomePageProps {
   weather: WeatherData | null;
 }
 
-export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeletePlant }: WebHomePageProps) {
+export function WebHomePage({
+  user,
+  plants,
+  onNavigate,
+  onUpdatePlant,
+  onDeletePlant,
+  weather
+}: WebHomePageProps) {
   const today = new Date();
-  const greeting = today.getHours() < 12 ? 'Good Morning' : today.getHours() < 18 ? 'Good Afternoon' : 'Good Evening';
+  const greeting =
+    today.getHours() < 12
+      ? 'Good Morning'
+      : today.getHours() < 18
+      ? 'Good Afternoon'
+      : 'Good Evening';
+
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [weatherAlerts, setWeatherAlerts] = useState<{ title: string; message: string; type: string }[]>([]);
-  const [weatherError, setWeatherError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadWeather() {
-      try {
-        setWeatherError(null);
+  const weatherAlerts = useMemo(() => {
+    return weather ? getWeatherAlerts(weather, user, plants) : [];
+  }, [weather, user, plants]);
 
-        const location = await getCurrentLocation();
-        const weatherData = await getWeather(location.lat, location.lon);
-
-        setWeather(weatherData);
-        setWeatherAlerts(getWeatherAlerts(weatherData, user, plants));
-      } catch (error) {
-        console.error('Failed to load weather:', error);
-        setWeatherError('Unable to load local weather.');
-      }
-    }
-
-    loadWeather();
-  }, [user, plants]);
-
-  // Calculate care reminders
   const getDaysUntilWater = (plant: Plant) => {
     const daysSinceWatered = Math.floor(
       (Date.now() - plant.lastWatered.getTime()) / (1000 * 60 * 60 * 24)
@@ -59,23 +52,31 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
     return plant.waterFrequency - daysSinceWatered;
   };
 
-  const plantsNeedingCare = plants.filter(p => getDaysUntilWater(p) <= 0);
-  const upcomingReminders = plants.filter(p => getDaysUntilWater(p) > 1 && getDaysUntilWater(p) <= 3);
+  const plantsNeedingCare = plants.filter((p) => getDaysUntilWater(p) <= 0);
+  const upcomingReminders = plants.filter(
+    (p) => getDaysUntilWater(p) > 1 && getDaysUntilWater(p) <= 3
+  );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-lg:space-y-4">
       {/* Welcome Section */}
-      <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-4 md:p-6 lg:p-8 text-white">
-        <h2 className="mb-2">{greeting}, {user.name}! 👋</h2>
-        <p className="text-green-50 mb-6">Your urban garden is growing beautifully</p>
+      <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-6 max-lg:p-4 text-white">
+        <h2 className="text-2xl max-lg:text-xl mb-2 max-lg:mb-1">
+          {greeting}, {user.name}! 👋
+        </h2>
+        <p className="text-base max-lg:text-sm text-green-50 mb-6 max-lg:mb-3">
+          Your urban garden is growing beautifully
+        </p>
 
-{/* Weather Section */}
+        {/* Weather Section */}
         {weather && weatherAlerts.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200">
+          <div className="bg-white/95 rounded-2xl p-5 max-lg:p-3 border border-gray-100 mb-4 max-lg:mb-3">
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
-                <h3 className="text-gray-900">Weather-Based Care Alerts</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="text-lg max-lg:text-sm text-gray-900">
+                  Weather-Based Care Alerts
+                </h3>
+                <p className="text-base max-lg:text-sm text-gray-600">
                   {weather.city ? `${weather.city} • ` : ''}
                   {Math.round(weather.temperature)}°C • {weather.description}
                 </p>
@@ -86,7 +87,7 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
               {weatherAlerts.map((alert, index) => (
                 <div
                   key={index}
-                  className="rounded-xl p-3 bg-blue-50 border border-blue-100"
+                  className="rounded-xl p-4 max-lg:p-2.5 bg-blue-50 border border-blue-100"
                 >
                   <p className="text-blue-900 mb-1">{alert.title}</p>
                   <p className="text-sm text-blue-800">{alert.message}</p>
@@ -96,29 +97,25 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
           </div>
         )}
 
-        {weatherError && (
-          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200">
-            <p className="text-sm text-gray-600">{weatherError}</p>
-          </div>
-        )}
-
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
-            <p className="text-3xl mb-1">{plants.length}</p>
-            <p className="text-sm text-green-50">Total Plants</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-lg:gap-3">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+            <p className="text-2xl max-lg:text-2xl leading-none mb-2">{plants.length}</p>
+            <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Total Plants</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
-            <p className="text-3xl mb-1">{plantsNeedingCare.length}</p>
-            <p className="text-sm text-green-50">Need Care</p>
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+            <p className="text-2xl max-lg:text-2xl leading-none mb-2">{plantsNeedingCare.length}</p>
+            <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Need Care</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
-            <p className="text-3xl mb-1">{plants.filter(p => p.currentStage === 'mature').length}</p>
-            <p className="text-sm text-green-50">Mature</p>
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+            <p className="text-2xl max-lg:text-2xl leading-none mb-2">
+              {plants.filter((p) => p.currentStage === 'mature').length}
+            </p>
+            <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Mature</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-3 md:p-4">
-            <p className="text-3xl mb-1">{upcomingReminders.length}</p>
-            <p className="text-sm text-green-50">Upcoming</p>
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+            <p className="text-2xl max-lg:text-2xl leading-none mb-2">{upcomingReminders.length}</p>
+            <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Upcoming</p>
           </div>
         </div>
       </div>
@@ -127,20 +124,20 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
       {plantsNeedingCare.length > 0 && (
         <div
           onClick={() => onNavigate('reminders')}
-          className="bg-blue-500 rounded-2xl p-6 text-white cursor-pointer hover:bg-blue-600 transition-colors"
+          className="bg-blue-500 rounded-2xl p-6 max-lg:p-4 text-white cursor-pointer hover:bg-blue-600 transition-colors"
         >
-          <div className="flex items-start gap-4">
-            <div className="bg-white/20 p-3 rounded-xl">
-              <Droplet className="w-8 h-8" />
+          <div className="flex items-start gap-4 max-lg:gap-3">
+            <div className="bg-white/20 p-3 max-lg:p-2.5 rounded-xl">
+              <Droplet className="w-8 h-8 max-lg:w-6 max-lg:h-6" />
             </div>
             <div className="flex-1">
-              <h3 className="mb-2">
+              <h3 className="text-xl max-lg:text-base mb-2 max-lg:mb-1">
                 {plantsNeedingCare.length} plant{plantsNeedingCare.length > 1 ? 's' : ''} need attention today
               </h3>
-              <p className="text-blue-100 mb-3">
-                {plantsNeedingCare.map(p => p.name).join(', ')}
+              <p className="text-base max-lg:text-sm text-blue-100 mb-3 max-lg:mb-2">
+                {plantsNeedingCare.map((p) => p.name).join(', ')}
               </p>
-              <button className="px-4 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors">
+              <button className="px-4 max-lg:px-3 py-2 bg-white text-blue-600 rounded-xl hover:bg-blue-50 transition-colors text-base max-lg:text-sm">
                 View Care Tasks
               </button>
             </div>
@@ -150,55 +147,73 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
 
       {/* Quick Actions */}
       <div>
-        <h3 className="text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <h3 className="text-lg max-lg:text-base text-gray-900 mb-4 max-lg:mb-3">
+          Quick Actions
+        </h3>
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 max-lg:gap-3">
           <button
             onClick={() => onNavigate('recommendations')}
-            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200"
+            className="bg-white rounded-2xl p-6 max-lg:p-4 text-left hover:shadow-lg transition-all border border-gray-200"
           >
-            <div className="bg-green-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
-              <Sprout className="w-6 h-6 md:w-7 md:h-7 text-green-600" />
+            <div className="bg-green-100 w-14 h-14 max-lg:w-12 max-lg:h-12 rounded-xl flex items-center justify-center mb-4 max-lg:mb-3">
+              <Sprout className="w-7 h-7 max-lg:w-6 max-lg:h-6 text-green-600" />
             </div>
-            <h4 className="text-gray-900 mb-2">Find Plants</h4>
-            <p className="text-sm text-gray-600">Get personalized recommendations for your space</p>
+            <h4 className="text-lg max-lg:text-sm text-gray-900 mb-2 max-lg:mb-1">
+              Find Plants
+            </h4>
+            <p className="text-sm max-lg:text-xs text-gray-600 leading-6 max-lg:leading-5">
+              Get personalized recommendations for your space
+            </p>
           </button>
 
           <button
             onClick={() => onNavigate('seed-tutorial')}
-            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200"
+            className="bg-white rounded-2xl p-6 max-lg:p-4 text-left hover:shadow-lg transition-all border border-gray-200"
           >
-            <div className="bg-amber-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
-              <BookOpen className="w-6 h-6 md:w-7 md:h-7 text-amber-600" />
+            <div className="bg-amber-100 w-14 h-14 max-lg:w-12 max-lg:h-12 rounded-xl flex items-center justify-center mb-4 max-lg:mb-3">
+              <BookOpen className="w-7 h-7 max-lg:w-6 max-lg:h-6 text-amber-600" />
             </div>
-            <h4 className="text-gray-900 mb-2">Seed Guide</h4>
-            <p className="text-sm text-gray-600">Learn to save and reuse seeds from groceries</p>
+            <h4 className="text-lg max-lg:text-sm text-gray-900 mb-2 max-lg:mb-1">
+              Seed Guide
+            </h4>
+            <p className="text-sm max-lg:text-xs text-gray-600 leading-6 max-lg:leading-5">
+              Learn to save and reuse seeds from groceries
+            </p>
           </button>
 
           <button
             onClick={() => onNavigate('health-check')}
-            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200"
+            className="bg-white rounded-2xl p-6 max-lg:p-4 text-left hover:shadow-lg transition-all border border-gray-200"
           >
-            <div className="bg-rose-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
-              <Camera className="w-6 h-6 md:w-7 md:h-7 text-rose-600" />
+            <div className="bg-rose-100 w-14 h-14 max-lg:w-12 max-lg:h-12 rounded-xl flex items-center justify-center mb-4 max-lg:mb-3">
+              <Camera className="w-7 h-7 max-lg:w-6 max-lg:h-6 text-rose-600" />
             </div>
-            <h4 className="text-gray-900 mb-2">Health Check</h4>
-            <p className="text-sm text-gray-600">AI-powered plant disease detection</p>
+            <h4 className="text-lg max-lg:text-sm text-gray-900 mb-2 max-lg:mb-1">
+              Health Check
+            </h4>
+            <p className="text-sm max-lg:text-xs text-gray-600 leading-6 max-lg:leading-5">
+              AI-powered plant disease detection
+            </p>
           </button>
 
           <button
             onClick={() => onNavigate('reminders')}
-            className="bg-white rounded-2xl p-4 md:p-6 text-left hover:shadow-lg transition-all border border-gray-200 relative"
+            className="bg-white rounded-2xl p-6 max-lg:p-4 text-left hover:shadow-lg transition-all border border-gray-200 relative"
           >
             {plantsNeedingCare.length > 0 && (
               <div className="absolute top-4 right-4 bg-red-500 text-white text-sm w-7 h-7 rounded-full flex items-center justify-center">
                 {plantsNeedingCare.length}
               </div>
             )}
-            <div className="bg-purple-100 w-12 h-12 md:w-14 md:h-14 rounded-xl flex items-center justify-center mb-3 md:mb-4">
-              <Bell className="w-6 h-6 md:w-7 md:h-7 text-purple-600" />
+            <div className="bg-purple-100 w-14 h-14 max-lg:w-12 max-lg:h-12 rounded-xl flex items-center justify-center mb-4 max-lg:mb-3">
+              <Bell className="w-7 h-7 max-lg:w-6 max-lg:h-6 text-purple-600" />
             </div>
-            <h4 className="text-gray-900 mb-2">Care Reminders</h4>
-            <p className="text-sm text-gray-600">Track watering and maintenance tasks</p>
+            <h4 className="text-lg max-lg:text-sm text-gray-900 mb-2 max-lg:mb-1">
+              Care Reminders
+            </h4>
+            <p className="text-sm max-lg:text-xs text-gray-600 leading-6 max-lg:leading-5">
+              Track watering and maintenance tasks
+            </p>
           </button>
         </div>
       </div>
@@ -206,8 +221,8 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
       {/* Recent Plants */}
       {plants.length > 0 && (
         <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-gray-900">Your Recent Plants</h3>
+          <div className="flex items-center justify-between mb-4 max-lg:mb-3">
+            <h3 className="text-lg max-lg:text-base text-gray-900">Your Recent Plants</h3>
             <button
               onClick={() => onNavigate('garden')}
               className="text-green-600 hover:text-green-700"
@@ -215,8 +230,8 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
               View All →
             </button>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {plants.slice(0, 6).map(plant => {
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 max-lg:gap-3">
+            {plants.slice(0, 6).map((plant) => {
               const daysUntilWater = getDaysUntilWater(plant);
               const needsWater = daysUntilWater <= 0;
 
@@ -224,17 +239,17 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
                 <div
                   key={plant.id}
                   onClick={() => setSelectedPlant(plant)}
-                  className="bg-white rounded-2xl p-3 md:p-4 border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+                  className="bg-white rounded-2xl p-4 max-lg:p-3 border border-gray-200 hover:shadow-md transition-all cursor-pointer"
                 >
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 max-lg:gap-3">
                     <img
                       src={plant.image}
                       alt={plant.name}
-                      className="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover"
+                      className="w-20 h-20 max-lg:w-16 max-lg:h-16 rounded-xl object-cover"
                     />
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-gray-900 mb-1">{plant.name}</h4>
-                      <p className="text-sm text-gray-600 mb-2 truncate">{plant.species}</p>
+                      <h4 className="text-base max-lg:text-sm text-gray-900 mb-1">{plant.name}</h4>
+                      <p className="text-sm max-lg:text-xs text-gray-600 mb-2 truncate">{plant.species}</p>
 
                       <div className="flex items-center gap-2 text-xs">
                         <span className="capitalize px-2 py-1 bg-green-100 text-green-700 rounded-full">
@@ -261,12 +276,12 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
 
       {/* Empty State */}
       {plants.length === 0 && (
-        <div className="bg-white rounded-2xl p-12 text-center border border-gray-200">
-          <div className="bg-gradient-to-br from-green-100 to-emerald-100 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6">
-            <Sprout className="w-12 h-12 text-green-600" />
+        <div className="bg-white rounded-2xl p-12 max-lg:p-8 text-center border border-gray-200">
+          <div className="bg-gradient-to-br from-green-100 to-emerald-100 w-24 h-24 max-lg:w-20 max-lg:h-20 rounded-3xl flex items-center justify-center mx-auto mb-6 max-lg:mb-4">
+            <Sprout className="w-12 h-12 max-lg:w-10 max-lg:h-10 text-green-600" />
           </div>
-          <h3 className="text-gray-900 mb-2">Start Your Urban Garden</h3>
-          <p className="text-gray-600 mb-6 max-w-md mx-auto">
+          <h3 className="text-2xl max-lg:text-lg text-gray-900 mb-2">Start Your Urban Garden</h3>
+          <p className="text-base max-lg:text-sm text-gray-600 mb-6 max-w-md mx-auto">
             Discover plants perfect for your apartment space and begin your gardening journey
           </p>
           <button
@@ -279,28 +294,28 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
       )}
 
       {/* Daily Tip */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-6 border border-green-200">
-          <div className="flex items-start gap-4">
-            <div className="bg-green-500 text-white p-3 rounded-xl">
-              <TrendingUp className="w-6 h-6" />
+      <div className="grid md:grid-cols-2 gap-6 max-lg:gap-4">
+        <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-2xl p-6 max-lg:p-4 border border-green-200">
+          <div className="flex items-start gap-4 max-lg:gap-3">
+            <div className="bg-green-500 text-white p-3 max-lg:p-2 rounded-xl">
+              <TrendingUp className="w-6 h-6 max-lg:w-5 max-lg:h-5" />
             </div>
             <div>
-              <h4 className="text-green-900 mb-2">Daily Gardening Tip</h4>
-              <p className="text-green-800">
-                Morning watering is best! Plants can absorb water better before the heat of the day, reducing evaporation and disease risk.
-              </p>
+              <h4 className="text-green-900 font-semibold mb-2">Daily Gardening Tip</h4>
+              <div className="space-y-2 text-sm text-green-800">
+              <p>Morning watering is best! Plants can absorb water better before the heat of the day, reducing evaporation and disease risk.</p>
             </div>
+           </div>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
-          <div className="flex items-start gap-4">
-            <div className="bg-blue-500 text-white p-3 rounded-xl">
-              <Sun className="w-6 h-6" />
+        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-2xl p-6 max-lg:p-4 border border-blue-200">
+          <div className="flex items-start gap-4 max-lg:gap-3">
+            <div className="bg-blue-500 text-white p-3 max-lg:p-2 rounded-xl">
+              <Sun className="w-6 h-6 max-lg:w-5 max-lg:h-5" />
             </div>
             <div>
-              <h4 className="text-blue-900 mb-2">Your Growing Conditions</h4>
+              <h4 className="text-blue-900 font-semibold mb-2">Your Growing Conditions</h4>
               <div className="space-y-2 text-sm text-blue-800">
                 <p>• Space: {user.spaceType} {user.outdoorAccess !== 'none' && `with ${user.outdoorAccess}`}</p>
                 <p>• Sunlight: {user.sunlightHours} hours daily</p>
@@ -320,7 +335,6 @@ export function WebHomePage({ user, plants, onNavigate, onUpdatePlant, onDeleteP
           daysUntilWater={getDaysUntilWater(selectedPlant)}
         />
       )}
-
     </div>
   );
 }

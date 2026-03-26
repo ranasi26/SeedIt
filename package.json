@@ -59,9 +59,11 @@
             "typescript": "^5.9.3",
             "vite": "6.3.5"
       },
+      
       "scripts": {
             "dev": "vite",
-            "build": "vite build"
+            "build": "vite build",
+            "preview": "vite preview"
       },
       "description": "This is a code bundle for Gardening App. The original project is available at https://www.figma.com/design/ZneQu6KmrSHAIDbscLDS9m/Gardening-App.",
       "main": "index.js",

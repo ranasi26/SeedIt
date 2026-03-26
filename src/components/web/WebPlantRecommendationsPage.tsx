@@ -12,8 +12,7 @@ export function WebPlantRecommendationsPage({ user, plants, onAddPlant }: WebPla
     <PlantRecommendationsPage 
       user={user} 
       plants={plants} 
-      onAddPlant={onAddPlant}
-      onBack={() => {}} 
+      onAddPlant={onAddPlant} 
     />
   );
 }

@@ -10,8 +10,8 @@ import {
 } from 'lucide-react';
 import type { UserProfile, Plant } from '../../App';
 import { PlantDetailDialog } from '../PlantDetailDialog';
-import { useState, useMemo } from 'react';
-import type { WeatherData } from '../../service/weather';
+import { useState, useMemo, useEffect } from 'react';
+import { getCurrentLocation, getWeather, type WeatherData } from '../../service/weather';
 import { getWeatherAlerts } from '../../service/weatherAdvice';
 
 interface WebHomePageProps {
@@ -40,10 +40,32 @@ export function WebHomePage({
       : 'Good Evening';
 
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const [localWeather, setLocalWeather] = useState<WeatherData | null>(weather);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadWeather() {
+      try {
+        setWeatherError(null);
+        const location = await getCurrentLocation();
+        const weatherData = await getWeather(location.lat, location.lon);
+        setLocalWeather(weatherData);
+      } catch (error) {
+        console.error('Failed to load weather:', error);
+        setWeatherError('Unable to load local weather.');
+      }
+    }
+
+    if (!weather) {
+      loadWeather();
+    } else {
+      setLocalWeather(weather);
+    }
+  }, [weather]);
 
   const weatherAlerts = useMemo(() => {
-    return weather ? getWeatherAlerts(weather, user, plants) : [];
-  }, [weather, user, plants]);
+    return localWeather ? getWeatherAlerts(localWeather, user, plants) : [];
+  }, [localWeather, user, plants]);
 
   const getDaysUntilWater = (plant: Plant) => {
     const daysSinceWatered = Math.floor(
@@ -69,16 +91,14 @@ export function WebHomePage({
         </p>
 
         {/* Weather Section */}
-        {weather && weatherAlerts.length > 0 && (
-          <div className="bg-white/95 rounded-2xl p-5 max-lg:p-3 border border-gray-100 mb-4 max-lg:mb-3">
+        {localWeather && weatherAlerts.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 md:p-6 border border-gray-200 mb-4">
             <div className="flex items-start justify-between gap-4 mb-3">
               <div>
-                <h3 className="text-lg max-lg:text-sm text-gray-900">
-                  Weather-Based Care Alerts
-                </h3>
-                <p className="text-base max-lg:text-sm text-gray-600">
-                  {weather.city ? `${weather.city} • ` : ''}
-                  {Math.round(weather.temperature)}°C • {weather.description}
+                <h3 className="text-gray-900">Weather-Based Care Alerts</h3>
+                <p className="text-sm text-gray-600">
+                  {localWeather.city ? `${localWeather.city} • ` : ''}
+                  {Math.round(localWeather.temperature)}°C • {localWeather.description}
                 </p>
               </div>
             </div>
@@ -87,7 +107,7 @@ export function WebHomePage({
               {weatherAlerts.map((alert, index) => (
                 <div
                   key={index}
-                  className="rounded-xl p-4 max-lg:p-2.5 bg-blue-50 border border-blue-100"
+                  className="rounded-xl p-3 bg-blue-50 border border-blue-100"
                 >
                   <p className="text-blue-900 mb-1">{alert.title}</p>
                   <p className="text-sm text-blue-800">{alert.message}</p>
@@ -97,23 +117,29 @@ export function WebHomePage({
           </div>
         )}
 
+        {weatherError && (
+          <div className="bg-gray-50 rounded-2xl p-4 border border-gray-200 mb-4">
+            <p className="text-sm text-gray-600">{weatherError}</p>
+          </div>
+        )}
+
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-lg:gap-3">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] flex flex-col justify-center">
             <p className="text-2xl max-lg:text-2xl leading-none mb-2">{plants.length}</p>
             <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Total Plants</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] flex flex-col justify-center">
             <p className="text-2xl max-lg:text-2xl leading-none mb-2">{plantsNeedingCare.length}</p>
             <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Need Care</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] flex flex-col justify-center">
             <p className="text-2xl max-lg:text-2xl leading-none mb-2">
               {plants.filter((p) => p.currentStage === 'mature').length}
             </p>
             <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Mature</p>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] max-lg:min-h-[92px] flex flex-col justify-center">
+          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 max-lg:px-3 max-lg:py-3 min-h-[92px] flex flex-col justify-center">
             <p className="text-2xl max-lg:text-2xl leading-none mb-2">{upcomingReminders.length}</p>
             <p className="text-sm max-lg:text-xs text-green-50 leading-tight">Upcoming</p>
           </div>
@@ -303,9 +329,9 @@ export function WebHomePage({
             <div>
               <h4 className="text-green-900 font-semibold mb-2">Daily Gardening Tip</h4>
               <div className="space-y-2 text-sm text-green-800">
-              <p>Morning watering is best! Plants can absorb water better before the heat of the day, reducing evaporation and disease risk.</p>
+                <p>Morning watering is best! Plants can absorb water better before the heat of the day, reducing evaporation and disease risk.</p>
+              </div>
             </div>
-           </div>
           </div>
         </div>
 

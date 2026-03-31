@@ -52,6 +52,7 @@
             "vaul": "^1.1.2"
       },
       "devDependencies": {
+            "@playwright/test": "^1.58.2",
             "@types/node": "^20.10.0",
             "@types/react": "^19.2.14",
             "@types/react-dom": "^19.2.3",
@@ -59,13 +60,12 @@
             "typescript": "^5.9.3",
             "vite": "6.3.5"
       },
-      
       "scripts": {
             "dev": "vite",
             "build": "vite build",
             "preview": "vite preview"
       },
-      "description": "This is a code bundle for Gardening App. The original project is available at https://www.figma.com/design/ZneQu6KmrSHAIDbscLDS9m/Gardening-App.",
+      "description": "This is a code bundle for Gardening App. It includes all the necessary dependencies and scripts to run the application. The app is built using React and Vite, and it utilizes various Radix UI components for the user interface. The app also integrates with Firebase for backend services and uses Tailwind CSS for styling.",
       "main": "index.js",
       "keywords": [],
       "author": "",

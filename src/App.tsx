@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState} from 'react';
 import { AuthPage } from './components/AuthPage';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { WebMainApp } from './components/WebMainApp';
 import { saveUserProfile, getUserProfile } from './service/users';
 import { getUserPlants, saveUserPlant, updateUserPlant, deleteUserPlant } from './service/userPlants';
+import { getWeather } from './service/weather';
 
 
 
@@ -38,7 +39,7 @@ export default function App() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [plants, setPlants] = useState<Plant[]>([]);
-
+  const [weather, setWeather] = useState<any>(null);
 const handleLogin = async (email: string, name: string) => {
   const existingUser = await getUserProfile(email);
   const existingPlants = await getUserPlants(email);
@@ -166,6 +167,7 @@ const handleDeletePlant = async (id: string) => {
   <WebMainApp
     user={user!}
     plants={plants}
+    weather={weather}
     onAddPlant={handleAddPlant}
     onUpdatePlant={handleUpdatePlant}
     onDeletePlant={handleDeletePlant}

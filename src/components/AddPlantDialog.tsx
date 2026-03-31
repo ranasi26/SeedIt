@@ -19,28 +19,34 @@ export function AddPlantDialog({ isOpen, onClose, onAdd }: AddPlantDialogProps) 
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name.trim()) return;
 
-    onAdd({
+    await onAdd({
       name: name.trim(),
       species: species.trim() || 'Unknown Species',
-      image: imageUrl.trim() || 'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
+      image:
+        imageUrl.trim() ||
+        'https://images.unsplash.com/photo-1459411621453-7b03977f4bfc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080',
       waterFrequency,
       lastWatered: new Date(),
       sunlight,
-      notes: notes.trim()
+      notes: notes.trim(),
+      plantedDate: new Date(),
+      currentStage: 'seed',
+      difficulty: 'easy',
+      tags: [],
     });
 
-    // Reset form
     setName('');
     setSpecies('');
     setImageUrl('');
     setWaterFrequency(7);
     setSunlight('medium');
     setNotes('');
+    onClose();
   };
 
   return (
@@ -94,6 +100,7 @@ export function AddPlantDialog({ isOpen, onClose, onAdd }: AddPlantDialogProps) 
                 />
               </div>
             </div>
+
             {imageUrl && (
               <div className="mt-2 rounded-xl overflow-hidden h-32">
                 <ImageWithFallback
